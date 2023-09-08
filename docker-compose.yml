@@ -1,0 +1,15 @@
+version: '3.7'
+services:
+  mongodb_container:
+    container_name: mongo
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - 27017:27017
+    volumes:
+      - skripsi_mongo:/data/db
+
+volumes:
+  skripsi_mongo:
