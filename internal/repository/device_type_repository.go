@@ -6,16 +6,15 @@ import (
 	"skripsi-be/internal/model/db"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type DeviceTypeRepository interface {
 	GetDeviceTypes(ctx context.Context) ([]db.DeviceType, error)
-	GetDeviceTypeById(ctx context.Context, id primitive.ObjectID) (db.DeviceType, error)
-	UpsertDeviceType(ctx context.Context, id primitive.ObjectID, deviceType db.DeviceType) error
-	DeleteDeviceType(ctx context.Context, id primitive.ObjectID) error
+	GetDeviceTypeById(ctx context.Context, id string) (db.DeviceType, error)
+	UpsertDeviceType(ctx context.Context, id string, deviceType db.DeviceType) error
+	DeleteDeviceType(ctx context.Context, id string) error
 }
 
 type deviceTypeRepository struct {
@@ -53,7 +52,7 @@ func (repository *deviceTypeRepository) GetDeviceTypes(ctx context.Context) ([]d
 	return deviceTypes, nil
 }
 
-func (repository *deviceTypeRepository) GetDeviceTypeById(ctx context.Context, id primitive.ObjectID) (db.DeviceType, error) {
+func (repository *deviceTypeRepository) GetDeviceTypeById(ctx context.Context, id string) (db.DeviceType, error) {
 	var deviceType db.DeviceType
 
 	filter := bson.M{"_id": id}
@@ -65,9 +64,9 @@ func (repository *deviceTypeRepository) GetDeviceTypeById(ctx context.Context, i
 	return deviceType, nil
 }
 
-func (repository *deviceTypeRepository) UpsertDeviceType(ctx context.Context, id primitive.ObjectID, deviceType db.DeviceType) error {
+func (repository *deviceTypeRepository) UpsertDeviceType(ctx context.Context, id string, deviceType db.DeviceType) error {
 	filter := bson.M{"_id": id}
-	update := deviceType
+	update := bson.M{"$set": deviceType}
 	opts := options.Update().SetUpsert(true)
 
 	_, err := repository.collection.UpdateOne(context.TODO(), filter, update, opts)
@@ -78,7 +77,7 @@ func (repository *deviceTypeRepository) UpsertDeviceType(ctx context.Context, id
 	return nil
 }
 
-func (repository *deviceTypeRepository) DeleteDeviceType(ctx context.Context, id primitive.ObjectID) error {
+func (repository *deviceTypeRepository) DeleteDeviceType(ctx context.Context, id string) error {
 	filter := bson.M{"_id": id}
 	_, err := repository.collection.DeleteOne(ctx, filter)
 	if err != nil {

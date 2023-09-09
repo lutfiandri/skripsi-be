@@ -3,6 +3,7 @@ package main
 import (
 	"skripsi-be/internal/controller"
 	"skripsi-be/internal/infrastructure"
+	"skripsi-be/internal/middleware"
 	"skripsi-be/internal/repository"
 	"skripsi-be/internal/service"
 
@@ -12,7 +13,10 @@ import (
 func main() {
 	mongo := infrastructure.NewMongoDatabase("mongodb://root:root@localhost:27017", "skripsi-be")
 
-	app := fiber.New()
+	appConfig := fiber.Config{
+		ErrorHandler: middleware.ErrorHandler,
+	}
+	app := fiber.New(appConfig)
 
 	deviceTypeRepository := repository.NewDeviceTypeRepository(mongo, "device-types")
 	deviceTypeService := service.NewDeviceTypeService(deviceTypeRepository)
