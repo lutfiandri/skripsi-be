@@ -25,9 +25,9 @@ type CreateDeviceTypeRequest struct {
 
 type UpdateDeviceTypeRequest struct {
 	Id          string `params:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	ResetGuide  string `json:"reset_guide"`
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description" validate:"required"`
+	ResetGuide  string `json:"reset_guide" validate:""`
 }
 
 type DeleteDeviceTypeRequest struct {

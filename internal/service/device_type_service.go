@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"skripsi-be/internal/model/rest"
@@ -20,6 +21,7 @@ type DeviceTypeService interface {
 }
 
 type deviceTypeService struct {
+	sync.Mutex
 	repository repository.DeviceTypeRepository
 }
 
@@ -68,6 +70,13 @@ func (service *deviceTypeService) CreateDeviceType(ctx context.Context, request 
 }
 
 func (service *deviceTypeService) UpdateDeviceType(ctx context.Context, request rest.UpdateDeviceTypeRequest) (rest.DeviceType, error) {
+	service.Lock()
+	defer service.Unlock()
+
+	if _, err := service.repository.GetDeviceTypeById(ctx, request.Id); err != nil {
+		return rest.DeviceType{}, err
+	}
+
 	deviceType := factory.UpdateDeviceTypeRestToDb(request)
 	deviceType.UpdatedAt = time.Now()
 
@@ -79,6 +88,13 @@ func (service *deviceTypeService) UpdateDeviceType(ctx context.Context, request 
 }
 
 func (service *deviceTypeService) DeleteDeviceType(ctx context.Context, request rest.DeleteDeviceTypeRequest) error {
+	service.Lock()
+	defer service.Unlock()
+
+	if _, err := service.repository.GetDeviceTypeById(ctx, request.Id); err != nil {
+		return err
+	}
+
 	err := service.repository.DeleteDeviceType(ctx, request.Id)
 	if err != nil {
 		return err
