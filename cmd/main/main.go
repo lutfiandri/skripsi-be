@@ -18,6 +18,11 @@ func main() {
 	}
 	app := fiber.New(appConfig)
 
+	userRepository := repository.NewUserRepository(mongo, "users")
+	authService := service.NewAuthService(userRepository)
+	authController := controller.NewAuthController(app, authService)
+	authController.InitHttpRoute()
+
 	deviceTypeRepository := repository.NewDeviceTypeRepository(mongo, "device-types")
 	deviceTypeService := service.NewDeviceTypeService(deviceTypeRepository)
 	deviceTypeController := controller.NewDeviceTypeController(app, deviceTypeService)
