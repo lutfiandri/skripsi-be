@@ -69,7 +69,7 @@ func (repository *deviceTypeRepository) UpsertDeviceType(ctx context.Context, id
 	update := bson.M{"$set": deviceType}
 	opts := options.Update().SetUpsert(true)
 
-	_, err := repository.collection.UpdateOne(context.TODO(), filter, update, opts)
+	_, err := repository.collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
 		return err
 	}
