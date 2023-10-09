@@ -7,11 +7,12 @@ import (
 
 	"skripsi-be/internal/model/rest"
 	"skripsi-be/internal/repository"
+	"skripsi-be/internal/util/factory"
 )
 
 type ProfileService interface {
-	GetProfile(ctx context.Context, claims rest.JWTClaims) (rest.UserResponse, error)
-	EditProfile(ctx context.Context, claims rest.JWTClaims, request rest.EditProfileRequest) (rest.UserResponse, error)
+	GetProfile(ctx context.Context, claims rest.JWTClaims) (rest.ProfileResponse, error)
+	EditProfile(ctx context.Context, claims rest.JWTClaims, request rest.EditProfileRequest) (rest.ProfileResponse, error)
 }
 
 type profileService struct {
@@ -25,46 +26,34 @@ func NewProfileService(userRepository repository.UserRepository) ProfileService 
 	}
 }
 
-func (service *profileService) GetProfile(ctx context.Context, claims rest.JWTClaims) (rest.UserResponse, error) {
+func (service *profileService) GetProfile(ctx context.Context, claims rest.JWTClaims) (rest.ProfileResponse, error) {
 	user, err := service.userRepository.GetUserByEmail(ctx, claims.User.Email)
 	if err != nil {
-		return rest.UserResponse{}, err
+		return rest.ProfileResponse{}, err
 	}
 
-	response := rest.UserResponse{
-		Id:        user.Id,
-		Email:     user.Email,
-		Name:      user.Name,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-	}
+	response := factory.ProfileDbToRest(user)
 
 	return response, nil
 }
 
-func (service *profileService) EditProfile(ctx context.Context, claims rest.JWTClaims, request rest.EditProfileRequest) (rest.UserResponse, error) {
+func (service *profileService) EditProfile(ctx context.Context, claims rest.JWTClaims, request rest.EditProfileRequest) (rest.ProfileResponse, error) {
 	service.Lock()
 	defer service.Unlock()
 
 	user, err := service.userRepository.GetUserByEmail(ctx, claims.User.Email)
 	if err != nil {
-		return rest.UserResponse{}, err
+		return rest.ProfileResponse{}, err
 	}
 
 	user.Name = request.Name
 	user.UpdatedAt = time.Now()
 
 	if err := service.userRepository.UpsertUser(ctx, claims.User.Id, user); err != nil {
-		return rest.UserResponse{}, err
+		return rest.ProfileResponse{}, err
 	}
 
-	response := rest.UserResponse{
-		Id:        user.Id,
-		Email:     user.Email,
-		Name:      user.Name,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-	}
+	response := factory.ProfileDbToRest(user)
 
 	return response, nil
 }
