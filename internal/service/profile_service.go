@@ -27,7 +27,7 @@ func NewProfileService(userRepository repository.UserRepository) ProfileService 
 
 func (service *profileService) GetProfile(ctx context.Context, claims rest.JWTClaims) (rest.UserResponse, error) {
 	user, err := service.userRepository.GetUserByEmail(ctx, claims.User.Email)
-	if err == nil {
+	if err != nil {
 		return rest.UserResponse{}, err
 	}
 

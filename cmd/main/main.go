@@ -28,5 +28,9 @@ func main() {
 	deviceTypeController := controller.NewDeviceTypeController(app, deviceTypeService)
 	deviceTypeController.InitHttpRoute()
 
+	profileService := service.NewProfileService(userRepository)
+	profileController := controller.NewProfileController(app, profileService)
+	profileController.InitHttpRoute()
+
 	app.Listen(":8080")
 }
