@@ -45,7 +45,7 @@ func (service *profileService) EditProfile(ctx context.Context, claims rest.JWTC
 	defer service.Unlock()
 
 	user, err := service.userRepository.GetUserByEmail(ctx, claims.User.Email)
-	if err == nil {
+	if err != nil {
 		return rest.UserResponse{}, err
 	}
 
@@ -57,9 +57,11 @@ func (service *profileService) EditProfile(ctx context.Context, claims rest.JWTC
 	}
 
 	response := rest.UserResponse{
-		Id:    user.Id,
-		Email: user.Email,
-		Name:  user.Name,
+		Id:        user.Id,
+		Email:     user.Email,
+		Name:      user.Name,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 
 	return response, nil
