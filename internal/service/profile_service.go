@@ -32,9 +32,11 @@ func (service *profileService) GetProfile(ctx context.Context, claims rest.JWTCl
 	}
 
 	response := rest.UserResponse{
-		Id:    user.Id,
-		Email: user.Email,
-		Name:  user.Name,
+		Id:        user.Id,
+		Email:     user.Email,
+		Name:      user.Name,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 
 	return response, nil
