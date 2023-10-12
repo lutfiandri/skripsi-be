@@ -9,6 +9,9 @@ type Device struct {
 	DeviceTypeId string
 	UserId       string
 	Name         string
+	Room         string
+	HwVersion    string
+	SwVersion    string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
