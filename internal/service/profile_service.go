@@ -7,7 +7,7 @@ import (
 
 	"skripsi-be/internal/model/rest"
 	"skripsi-be/internal/repository"
-	"skripsi-be/internal/util/factory"
+	"skripsi-be/internal/util/factory/modelfactory"
 )
 
 type ProfileService interface {
@@ -32,7 +32,7 @@ func (service *profileService) GetProfile(ctx context.Context, claims rest.JWTCl
 		return rest.ProfileResponse{}, err
 	}
 
-	response := factory.ProfileDbToRest(user)
+	response := modelfactory.ProfileDbToRest(user)
 
 	return response, nil
 }
@@ -53,7 +53,7 @@ func (service *profileService) EditProfile(ctx context.Context, claims rest.JWTC
 		return rest.ProfileResponse{}, err
 	}
 
-	response := factory.ProfileDbToRest(user)
+	response := modelfactory.ProfileDbToRest(user)
 
 	return response, nil
 }

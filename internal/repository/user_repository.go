@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"skripsi-be/internal/model/db"
+	"skripsi-be/internal/model/domain"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,10 +11,10 @@ import (
 )
 
 type UserRepository interface {
-	GetUsers(ctx context.Context) ([]db.User, error)
-	GetUserById(ctx context.Context, id string) (db.User, error)
-	GetUserByEmail(ctx context.Context, email string) (db.User, error)
-	UpsertUser(ctx context.Context, id string, user db.User) error
+	GetUsers(ctx context.Context) ([]domain.User, error)
+	GetUserById(ctx context.Context, id string) (domain.User, error)
+	GetUserByEmail(ctx context.Context, email string) (domain.User, error)
+	UpsertUser(ctx context.Context, id string, user domain.User) error
 	DeleteUser(ctx context.Context, id string) error
 }
 
@@ -30,8 +30,8 @@ func NewUserRepository(database *mongo.Database, collectionName string) UserRepo
 	}
 }
 
-func (repository *userRepository) GetUsers(ctx context.Context) ([]db.User, error) {
-	var users []db.User
+func (repository *userRepository) GetUsers(ctx context.Context) ([]domain.User, error) {
+	var users []domain.User
 
 	filter := bson.M{}
 
@@ -42,7 +42,7 @@ func (repository *userRepository) GetUsers(ctx context.Context) ([]db.User, erro
 	defer cursor.Close(ctx)
 
 	for cursor.Next(ctx) {
-		var user db.User
+		var user domain.User
 		if err := cursor.Decode(&user); err != nil {
 			return users, err
 		}
@@ -53,8 +53,8 @@ func (repository *userRepository) GetUsers(ctx context.Context) ([]db.User, erro
 	return users, nil
 }
 
-func (repository *userRepository) GetUserById(ctx context.Context, id string) (db.User, error) {
-	var user db.User
+func (repository *userRepository) GetUserById(ctx context.Context, id string) (domain.User, error) {
+	var user domain.User
 
 	filter := bson.M{"_id": id}
 
@@ -65,8 +65,8 @@ func (repository *userRepository) GetUserById(ctx context.Context, id string) (d
 	return user, nil
 }
 
-func (repository *userRepository) GetUserByEmail(ctx context.Context, email string) (db.User, error) {
-	var user db.User
+func (repository *userRepository) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
+	var user domain.User
 
 	filter := bson.M{"email": email}
 
@@ -77,7 +77,7 @@ func (repository *userRepository) GetUserByEmail(ctx context.Context, email stri
 	return user, nil
 }
 
-func (repository *userRepository) UpsertUser(ctx context.Context, id string, user db.User) error {
+func (repository *userRepository) UpsertUser(ctx context.Context, id string, user domain.User) error {
 	filter := bson.M{"_id": id}
 	update := bson.M{"$set": user}
 	opts := options.Update().SetUpsert(true)

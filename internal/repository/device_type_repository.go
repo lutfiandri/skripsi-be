@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"skripsi-be/internal/model/db"
+	"skripsi-be/internal/model/domain"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,9 +11,9 @@ import (
 )
 
 type DeviceTypeRepository interface {
-	GetDeviceTypes(ctx context.Context) ([]db.DeviceType, error)
-	GetDeviceTypeById(ctx context.Context, id string) (db.DeviceType, error)
-	UpsertDeviceType(ctx context.Context, id string, deviceType db.DeviceType) error
+	GetDeviceTypes(ctx context.Context) ([]domain.DeviceType, error)
+	GetDeviceTypeById(ctx context.Context, id string) (domain.DeviceType, error)
+	UpsertDeviceType(ctx context.Context, id string, deviceType domain.DeviceType) error
 	DeleteDeviceType(ctx context.Context, id string) error
 }
 
@@ -29,8 +29,8 @@ func NewDeviceTypeRepository(database *mongo.Database, collectionName string) De
 	}
 }
 
-func (repository *deviceTypeRepository) GetDeviceTypes(ctx context.Context) ([]db.DeviceType, error) {
-	var deviceTypes []db.DeviceType
+func (repository *deviceTypeRepository) GetDeviceTypes(ctx context.Context) ([]domain.DeviceType, error) {
+	var deviceTypes []domain.DeviceType
 
 	filter := bson.M{}
 
@@ -41,7 +41,7 @@ func (repository *deviceTypeRepository) GetDeviceTypes(ctx context.Context) ([]d
 	defer cursor.Close(ctx)
 
 	for cursor.Next(ctx) {
-		var deviceType db.DeviceType
+		var deviceType domain.DeviceType
 		if err := cursor.Decode(&deviceType); err != nil {
 			return deviceTypes, err
 		}
@@ -52,8 +52,8 @@ func (repository *deviceTypeRepository) GetDeviceTypes(ctx context.Context) ([]d
 	return deviceTypes, nil
 }
 
-func (repository *deviceTypeRepository) GetDeviceTypeById(ctx context.Context, id string) (db.DeviceType, error) {
-	var deviceType db.DeviceType
+func (repository *deviceTypeRepository) GetDeviceTypeById(ctx context.Context, id string) (domain.DeviceType, error) {
+	var deviceType domain.DeviceType
 
 	filter := bson.M{"_id": id}
 
@@ -64,7 +64,7 @@ func (repository *deviceTypeRepository) GetDeviceTypeById(ctx context.Context, i
 	return deviceType, nil
 }
 
-func (repository *deviceTypeRepository) UpsertDeviceType(ctx context.Context, id string, deviceType db.DeviceType) error {
+func (repository *deviceTypeRepository) UpsertDeviceType(ctx context.Context, id string, deviceType domain.DeviceType) error {
 	filter := bson.M{"_id": id}
 	update := bson.M{"$set": deviceType}
 	opts := options.Update().SetUpsert(true)
