@@ -3,7 +3,7 @@ package rest
 import "time"
 
 type DeviceResponse struct {
-	Id           string    `json:"_id"`
+	Id           string    `json:"id"`
 	UserId       *string   `json:"user_id"`
 	DeviceTypeId string    `json:"device_type_id"`
 	Name         string    `json:"name"`
