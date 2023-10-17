@@ -34,7 +34,7 @@ func NewDeviceController(app *fiber.App, service service.DeviceService) DeviceCo
 }
 
 func (controller *deviceController) InitHttpRoute() {
-	api := controller.app.Group("/device")
+	api := controller.app.Group("/devices")
 	api.Post("/", controller.CreateDevice)
 	api.Get("/", controller.GetDevices)
 	api.Get("/:id", controller.GetDeviceById)
