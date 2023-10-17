@@ -39,6 +39,7 @@ func (controller *deviceController) InitHttpRoute() {
 	api.Get("/", controller.GetDevices)
 	api.Get("/:id", controller.GetDeviceById)
 	api.Put("/:id", controller.UpdateDevice)
+	api.Put("/:id/version", controller.UpdateDeviceVersion)
 	api.Delete("/:id", controller.DeleteDevice)
 
 	api.Post("/:id/acquire", middleware.NewAuthenticator(), controller.AcquireDevice)
@@ -148,11 +149,12 @@ func (controller *deviceController) AcquireDevice(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := controller.service.AcquireDevice(c.Context(), claims, request); err != nil {
+	result, err := controller.service.AcquireDevice(c.Context(), claims, request)
+	if err != nil {
 		return err
 	}
 
-	response := rest.NewSuccessResponse(nil)
+	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
 }
