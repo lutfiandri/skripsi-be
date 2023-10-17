@@ -1,4 +1,4 @@
-package googlehomefactory
+package ghdevicefactory
 
 import (
 	"skripsi-be/internal/model/domain"
