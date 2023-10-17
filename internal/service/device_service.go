@@ -20,7 +20,7 @@ type DeviceService interface {
 	UpdateDeviceVersion(ctx context.Context, request rest.UpdateDeviceVersionRequest) (rest.DeviceResponse, error)
 	DeleteDevice(ctx context.Context, request rest.DeleteDeviceRequest) error
 
-	AcquireDevice(ctx context.Context, claims rest.JWTClaims, request rest.AcquireDeviceRequest) error
+	AcquireDevice(ctx context.Context, claims rest.JWTClaims, request rest.AcquireDeviceRequest) (rest.DeviceResponse, error)
 }
 
 type deviceService struct {
@@ -76,11 +76,13 @@ func (service *deviceService) UpdateDevice(ctx context.Context, request rest.Upd
 	service.Lock()
 	defer service.Unlock()
 
-	if _, err := service.repository.GetDeviceById(ctx, request.Id); err != nil {
+	device, err := service.repository.GetDeviceById(ctx, request.Id)
+	if err != nil {
 		return rest.DeviceResponse{}, err
 	}
 
-	device := modelfactory.UpdateDeviceRestToDomain(request)
+	device.Name = request.Name
+	device.Room = request.Room
 	device.UpdatedAt = time.Now()
 
 	if err := service.repository.UpsertDevice(ctx, request.Id, device); err != nil {
@@ -94,11 +96,32 @@ func (service *deviceService) UpdateDeviceVersion(ctx context.Context, request r
 	service.Lock()
 	defer service.Unlock()
 
-	if _, err := service.repository.GetDeviceById(ctx, request.Id); err != nil {
+	device, err := service.repository.GetDeviceById(ctx, request.Id)
+	if err != nil {
 		return rest.DeviceResponse{}, err
 	}
 
-	device := modelfactory.UpdateDeviceVersionRestToDomain(request)
+	device.HwVersion = request.HwVersion
+	device.SwVersion = request.SwVersion
+	device.UpdatedAt = time.Now()
+
+	if err := service.repository.UpsertDevice(ctx, request.Id, device); err != nil {
+		return rest.DeviceResponse{}, err
+	}
+
+	return modelfactory.DeviceDomainToRest(device), nil
+}
+
+func (service *deviceService) AcquireDevice(ctx context.Context, claims rest.JWTClaims, request rest.AcquireDeviceRequest) (rest.DeviceResponse, error) {
+	service.Lock()
+	defer service.Unlock()
+
+	device, err := service.repository.GetDeviceById(ctx, request.Id)
+	if err != nil {
+		return rest.DeviceResponse{}, err
+	}
+
+	device.UserId = &claims.User.Id
 	device.UpdatedAt = time.Now()
 
 	if err := service.repository.UpsertDevice(ctx, request.Id, device); err != nil {
@@ -113,22 +136,6 @@ func (service *deviceService) DeleteDevice(ctx context.Context, request rest.Del
 	defer service.Unlock()
 
 	if _, err := service.repository.GetDeviceById(ctx, request.Id); err != nil {
-		return err
-	}
-
-	err := service.repository.DeleteDevice(ctx, request.Id)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (service *deviceService) AcquireDevice(ctx context.Context, claims rest.JWTClaims, request rest.AcquireDeviceRequest) error {
-	service.Lock()
-	defer service.Unlock()
-
-	if err := service.repository.UpdateUser(ctx, request.Id, claims.User.Id); err != nil {
 		return err
 	}
 
