@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"skripsi-be/internal/model/db"
+	"skripsi-be/internal/model/domain"
 	"skripsi-be/internal/model/rest"
 	"skripsi-be/internal/repository"
 	"skripsi-be/internal/util/helper"
@@ -44,7 +44,7 @@ func (service *authService) Register(ctx context.Context, request rest.RegisterR
 
 	userId := uuid.NewString()
 	now := time.Now()
-	user := db.User{
+	user := domain.User{
 		Id:        userId,
 		Email:     request.Email,
 		Password:  string(hashedPassword),

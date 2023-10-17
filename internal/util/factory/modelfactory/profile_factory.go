@@ -1,13 +1,13 @@
-package factory
+package modelfactory
 
 import (
-	"skripsi-be/internal/model/db"
+	"skripsi-be/internal/model/domain"
 	"skripsi-be/internal/model/rest"
 )
 
 // db to rest
 
-func ProfileDbToRest(user db.User) rest.ProfileResponse {
+func ProfileDbToRest(user domain.User) rest.ProfileResponse {
 	result := rest.ProfileResponse{
 		Id:        user.Id,
 		Email:     user.Email,
@@ -18,7 +18,7 @@ func ProfileDbToRest(user db.User) rest.ProfileResponse {
 	return result
 }
 
-func ProfileDbToRestMany(users []db.User) []rest.ProfileResponse {
+func ProfileDbToRestMany(users []domain.User) []rest.ProfileResponse {
 	var results []rest.ProfileResponse
 	for _, user := range users {
 		results = append(results, ProfileDbToRest(user))
