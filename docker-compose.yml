@@ -1,6 +1,6 @@
 version: '3.7'
 services:
-  mongodb_container:
+  mongo:
     container_name: mongo
     image: mongo:latest
     environment:
@@ -11,5 +11,46 @@ services:
     volumes:
       - skripsi_mongo:/data/db
 
+  kafka:
+    container_name: kafka
+    image: docker.io/bitnami/kafka:3.6
+    ports:
+      - 9092:9092
+    volumes:
+      - skripsi_kafka:/bitnami
+    environment:
+      # KRaft settings
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      # Listeners
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+
+  init-kafka:
+    image: docker.io/bitnami/kafka:3.6
+    depends_on:
+      - kafka
+    entrypoint: ['/bin/sh', '-c']
+    command: |
+      "
+      # blocks until kafka is reachable
+
+      echo -e 'Creating kafka topics'
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic auth --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic user --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic log --replication-factor 1 --partitions 1    
+
+      echo -e 'Created kafka topics:'
+      kafka-topics --bootstrap-server kafka:29092 --list
+      "
+
 volumes:
   skripsi_mongo:
+    driver: local
+  skripsi_kafka:
+    driver: local
