@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"skripsi-be/internal/model/domain"
 
@@ -32,7 +33,7 @@ func NewDeviceTypeRepository(database *mongo.Database, collectionName string) De
 func (repository *deviceTypeRepository) GetDeviceTypes(ctx context.Context) ([]domain.DeviceType, error) {
 	var deviceTypes []domain.DeviceType
 
-	filter := bson.M{}
+	filter := bson.M{"deleted_at": nil}
 
 	cursor, err := repository.collection.Find(ctx, filter)
 	if err != nil {
@@ -55,7 +56,7 @@ func (repository *deviceTypeRepository) GetDeviceTypes(ctx context.Context) ([]d
 func (repository *deviceTypeRepository) GetDeviceTypeById(ctx context.Context, id string) (domain.DeviceType, error) {
 	var deviceType domain.DeviceType
 
-	filter := bson.M{"_id": id}
+	filter := bson.M{"_id": id, "deleted_at": nil}
 
 	if err := repository.collection.FindOne(ctx, filter).Decode(&deviceType); err != nil {
 		return deviceType, err
@@ -65,7 +66,8 @@ func (repository *deviceTypeRepository) GetDeviceTypeById(ctx context.Context, i
 }
 
 func (repository *deviceTypeRepository) UpsertDeviceType(ctx context.Context, id string, deviceType domain.DeviceType) error {
-	filter := bson.M{"_id": id}
+	filter := bson.M{"_id": id, "deleted_at": nil}
+
 	update := bson.M{"$set": deviceType}
 	opts := options.Update().SetUpsert(true)
 
@@ -78,8 +80,12 @@ func (repository *deviceTypeRepository) UpsertDeviceType(ctx context.Context, id
 }
 
 func (repository *deviceTypeRepository) DeleteDeviceType(ctx context.Context, id string) error {
-	filter := bson.M{"_id": id}
-	_, err := repository.collection.DeleteOne(ctx, filter)
+	filter := bson.M{"_id": id, "deleted_at": nil}
+	update := bson.M{"$set": bson.M{
+		"deleted_at": time.Now(),
+	}}
+
+	_, err := repository.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
