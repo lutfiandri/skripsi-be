@@ -23,10 +23,15 @@ func main() {
 	authController := controller.NewAuthController(app, authService)
 	authController.InitHttpRoute()
 
-	deviceTypeRepository := repository.NewDeviceTypeRepository(mongo, "device-types")
+	deviceTypeRepository := repository.NewDeviceTypeRepository(mongo, "device_types")
 	deviceTypeService := service.NewDeviceTypeService(deviceTypeRepository)
 	deviceTypeController := controller.NewDeviceTypeController(app, deviceTypeService)
 	deviceTypeController.InitHttpRoute()
+
+	deviceRepository := repository.NewDeviceRepository(mongo, "devices")
+	deviceService := service.NewDeviceService(deviceRepository)
+	deviceController := controller.NewDeviceController(app, deviceService)
+	deviceController.InitHttpRoute()
 
 	profileService := service.NewProfileService(userRepository)
 	profileController := controller.NewProfileController(app, profileService)
