@@ -6,8 +6,8 @@ import (
 
 type Device struct {
 	Id           string     `bson:"_id"`
+	UserId       *string    `bson:"user_id"`
 	DeviceTypeId string     `bson:"device_type_id"`
-	UserId       string     `bson:"user_id"`
 	Name         string     `bson:"name"`
 	Room         string     `bson:"room"`
 	HwVersion    string     `bson:"hw_version"`
