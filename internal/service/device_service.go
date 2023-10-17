@@ -17,7 +17,10 @@ type DeviceService interface {
 	GetDevice(ctx context.Context, request rest.GetDeviceRequest) (rest.DeviceResponse, error)
 	CreateDevice(ctx context.Context, request rest.CreateDeviceRequest) (rest.DeviceResponse, error)
 	UpdateDevice(ctx context.Context, request rest.UpdateDeviceRequest) (rest.DeviceResponse, error)
+	UpdateDeviceVersion(ctx context.Context, request rest.UpdateDeviceVersionRequest) (rest.DeviceResponse, error)
 	DeleteDevice(ctx context.Context, request rest.DeleteDeviceRequest) error
+
+	AcquireDevice(ctx context.Context, claims rest.JWTClaims, request rest.AcquireDeviceRequest) error
 }
 
 type deviceService struct {
@@ -87,11 +90,45 @@ func (service *deviceService) UpdateDevice(ctx context.Context, request rest.Upd
 	return modelfactory.DeviceDomainToRest(device), nil
 }
 
+func (service *deviceService) UpdateDeviceVersion(ctx context.Context, request rest.UpdateDeviceVersionRequest) (rest.DeviceResponse, error) {
+	service.Lock()
+	defer service.Unlock()
+
+	if _, err := service.repository.GetDeviceById(ctx, request.Id); err != nil {
+		return rest.DeviceResponse{}, err
+	}
+
+	device := modelfactory.UpdateDeviceVersionRestToDomain(request)
+	device.UpdatedAt = time.Now()
+
+	if err := service.repository.UpsertDevice(ctx, request.Id, device); err != nil {
+		return rest.DeviceResponse{}, err
+	}
+
+	return modelfactory.DeviceDomainToRest(device), nil
+}
+
 func (service *deviceService) DeleteDevice(ctx context.Context, request rest.DeleteDeviceRequest) error {
 	service.Lock()
 	defer service.Unlock()
 
 	if _, err := service.repository.GetDeviceById(ctx, request.Id); err != nil {
+		return err
+	}
+
+	err := service.repository.DeleteDevice(ctx, request.Id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (service *deviceService) AcquireDevice(ctx context.Context, claims rest.JWTClaims, request rest.AcquireDeviceRequest) error {
+	service.Lock()
+	defer service.Unlock()
+
+	if err := service.repository.UpdateUser(ctx, request.Id, claims.User.Id); err != nil {
 		return err
 	}
 
