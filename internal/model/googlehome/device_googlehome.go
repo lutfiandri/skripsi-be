@@ -28,6 +28,11 @@ type OtherDeviceID struct {
 	DeviceID string
 }
 
+// CustomData specified which will be included unmodified in subsequent requests.
+type CustomData struct {
+	UserId *string
+}
+
 // Device represents a single provider-supplied device profile.
 type Device struct {
 	// ID of the device
@@ -61,5 +66,5 @@ type Device struct {
 	OtherDeviceIDs []OtherDeviceID
 
 	// CustomData specified which will be included unmodified in subsequent requests.
-	CustomData map[string]interface{}
+	CustomData CustomData
 }

@@ -22,6 +22,8 @@ func NewDevice(device domain.Device) googlehome.Device {
 			SwVersion:    device.SwVersion,
 		},
 		OtherDeviceIDs: []googlehome.OtherDeviceID{},
-		CustomData:     map[string]interface{}{},
+		CustomData: googlehome.CustomData{
+			UserId: device.UserId,
+		},
 	}
 }
