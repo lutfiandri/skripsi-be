@@ -31,24 +31,6 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
 
-  init-kafka:
-    image: docker.io/bitnami/kafka:3.6
-    depends_on:
-      - kafka
-    entrypoint: ['/bin/sh', '-c']
-    command: |
-      "
-      # blocks until kafka is reachable
-
-      echo -e 'Creating kafka topics'
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic auth --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic user --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic log --replication-factor 1 --partitions 1    
-
-      echo -e 'Created kafka topics:'
-      kafka-topics --bootstrap-server kafka:29092 --list
-      "
-
 volumes:
   skripsi_mongo:
     driver: local
