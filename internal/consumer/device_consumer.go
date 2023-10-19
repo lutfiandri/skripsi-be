@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"skripsi-be/internal/model/mqttmodel"
+	"skripsi-be/internal/util/helper"
+
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -32,7 +35,7 @@ func (consumer *deviceConsumer) InitMqttSubscriber() {
 	}
 	topics := []topicType{
 		{
-			topic:    "dteti/capstone-c12",
+			topic:    "+/meter/data",
 			qos:      1,
 			callback: consumer.HandleSmartPlugData,
 		},
@@ -51,6 +54,12 @@ func (consumer *deviceConsumer) InitMqttSubscriber() {
 
 func (consumer *deviceConsumer) HandleSmartPlugData(client mqtt.Client, message mqtt.Message) {
 	log.Println("message", message.Topic(), string(message.Payload()))
+	data, err := helper.UnmarshalJson[mqttmodel.SmartPlugLitIncomingData](message.Payload())
+	if err != nil {
+		log.Println("error on parsing data: ", err.Error())
+		return
+	}
+	log.Printf("smartplug lit: %+v\n", data)
 }
 
 func (consumer *deviceConsumer) HandleSmartLampData(client mqtt.Client, message mqtt.Message) {

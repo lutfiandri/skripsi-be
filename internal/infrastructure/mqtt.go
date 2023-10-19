@@ -14,6 +14,7 @@ func NewMqttClient(brokerUri, username, password string) mqtt.Client {
 		fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
 	}
 
+	// opts.SetClientID("go_mqtt_client")
 	opts.SetDefaultPublishHandler(messagePubHandler)
 	opts.SetUsername(username)
 	opts.SetPassword(password)
