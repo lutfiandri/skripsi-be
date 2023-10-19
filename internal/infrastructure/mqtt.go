@@ -7,7 +7,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-func NewMqttClient(brokerUri string) mqtt.Client {
+func NewMqttClient(brokerUri, username, password string) mqtt.Client {
 	opts := mqtt.NewClientOptions().AddBroker(brokerUri)
 
 	var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
@@ -15,6 +15,8 @@ func NewMqttClient(brokerUri string) mqtt.Client {
 	}
 
 	opts.SetDefaultPublishHandler(messagePubHandler)
+	opts.SetUsername(username)
+	opts.SetPassword(password)
 
 	client := mqtt.NewClient(opts)
 
