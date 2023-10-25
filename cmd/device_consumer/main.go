@@ -7,13 +7,17 @@ import (
 	"skripsi-be/internal/config"
 	"skripsi-be/internal/consumer"
 	"skripsi-be/internal/infrastructure"
+	"skripsi-be/internal/publisher"
 )
 
 func main() {
 	log.Println("device consumer service")
 	mqttClient := infrastructure.NewMqttClient(config.MqttBrokerUri, config.MqttUsername, config.MqttPassword)
+	kafkaWriter := infrastructure.NewKafkaWriter("localhost:9092")
 
-	deviceConsumer := consumer.NewDeviceConsumer(mqttClient)
+	kafkaPublisher := publisher.NewKafkaPublisher(kafkaWriter)
+
+	deviceConsumer := consumer.NewDeviceConsumer(mqttClient, kafkaPublisher)
 	deviceConsumer.InitMqttSubscriber()
 
 	// prevent app from exiting
