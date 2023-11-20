@@ -42,6 +42,7 @@ func NewDeviceStateRepository(database *mongo.Database, collectionName string) D
 	collection.Indexes().CreateMany(context.Background(), []mongo.IndexModel{
 		{Keys: bson.M{"_id": 1}},
 		{Keys: bson.M{"device_id": 1}},
+		{Keys: bson.M{"created_at": 1}},
 	})
 
 	return &deviceStateRepository{
