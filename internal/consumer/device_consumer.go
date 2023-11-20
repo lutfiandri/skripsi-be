@@ -7,6 +7,8 @@ import (
 
 	"skripsi-be/internal/model/mqttmodel"
 	"skripsi-be/internal/publisher"
+	"skripsi-be/internal/repository"
+	"skripsi-be/internal/util/factory/modelfactory"
 	"skripsi-be/internal/util/helper"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -20,14 +22,16 @@ type DeviceConsumer interface {
 }
 
 type deviceConsumer struct {
-	mqttClient     mqtt.Client
-	kafkaPublisher publisher.KafkaPublisher
+	mqttClient            mqtt.Client
+	kafkaPublisher        publisher.KafkaPublisher
+	deviceStateRepository repository.DeviceStateRepository
 }
 
-func NewDeviceConsumer(mqttClient mqtt.Client, kafkaPublisher publisher.KafkaPublisher) DeviceConsumer {
+func NewDeviceConsumer(mqttClient mqtt.Client, kafkaPublisher publisher.KafkaPublisher, deviceStateRepository repository.DeviceStateRepository) DeviceConsumer {
 	return &deviceConsumer{
-		mqttClient:     mqttClient,
-		kafkaPublisher: kafkaPublisher,
+		mqttClient:            mqttClient,
+		kafkaPublisher:        kafkaPublisher,
+		deviceStateRepository: deviceStateRepository,
 	}
 }
 
@@ -65,10 +69,17 @@ func (consumer *deviceConsumer) HandleSmartPlugData(client mqtt.Client, message 
 	}
 	log.Printf("smartplug lit: %+v\n", data)
 
-	if err := consumer.kafkaPublisher.Publish(context.Background(), "test-topic", data); err != nil {
+	deviceState := modelfactory.DeviceStateSmartPlugLitMqttToDomain(data)
+	if err := consumer.deviceStateRepository.InsertDeviceState(context.Background(), deviceState); err != nil {
+		log.Println("error on saving SmartPlugLit state to database: ", err.Error())
+	}
+
+	kafkaMessage := modelfactory.DeviceStateSmartPlugLitMqttToKafka(data)
+
+	if err := consumer.kafkaPublisher.Publish(context.Background(), "test-topic", kafkaMessage); err != nil {
 		log.Println("error on publishing data: ", err.Error())
 	} else {
-		log.Println("sent to kafka: ", data)
+		log.Println("sent to kafka: ", kafkaMessage)
 	}
 }
 
