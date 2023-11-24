@@ -1,6 +1,9 @@
 package main
 
 import (
+	"log"
+
+	"skripsi-be/internal/config"
 	"skripsi-be/internal/controller"
 	"skripsi-be/internal/infrastructure"
 	"skripsi-be/internal/middleware"
@@ -11,7 +14,9 @@ import (
 )
 
 func main() {
-	mongo := infrastructure.NewMongoDatabase("mongodb://root:root@localhost:27017", "skripsi-be")
+	log.Println("main service")
+
+	mongo := infrastructure.NewMongoDatabase(config.MongoUri, config.MongoDbName)
 
 	appConfig := fiber.Config{
 		ErrorHandler: middleware.ErrorHandler,

@@ -8,6 +8,9 @@ import (
 
 var (
 	JWTSecretKey  = os.Getenv("JWT_SECRET_KEY")
-	MONGO_URI     = os.Getenv("MONGO_URI")
-	MONGO_DB_NAME = os.Getenv("MONGO_DB_NAME")
+	MongoUri      = os.Getenv("MONGO_URI")
+	MongoDbName   = os.Getenv("MONGO_DB_NAME")
+	MqttBrokerUri = os.Getenv("MQTT_BROKER_URI")
+	MqttUsername  = os.Getenv("MQTT_USERNAME")
+	MqttPassword  = os.Getenv("MQTT_PASSWORD")
 )
