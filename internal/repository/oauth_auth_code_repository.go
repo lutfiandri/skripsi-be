@@ -29,7 +29,7 @@ func NewOAuthAuthCodeRepository(database *mongo.Database, collectionName string)
 		},
 		{
 			Keys:    bson.M{"created_at": 1},
-			Options: options.Index().SetExpireAfterSeconds(60),
+			Options: options.Index().SetExpireAfterSeconds(30),
 		},
 	})
 
