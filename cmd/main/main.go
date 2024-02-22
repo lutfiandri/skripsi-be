@@ -42,5 +42,10 @@ func main() {
 	profileController := controller.NewProfileController(app, profileService)
 	profileController.InitHttpRoute()
 
+	oauthClientRepository := repository.NewOAuthClientRepository(mongo, "oauth_clients")
+	oauthClientService := service.NewOAuthClientService(oauthClientRepository)
+	oauthClientController := controller.NewOAuthClientController(app, oauthClientService)
+	oauthClientController.InitHttpRoute()
+
 	app.Listen(":8080")
 }

@@ -6,6 +6,7 @@ import (
 	"skripsi-be/internal/model/rest"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var ErrorHandler = func(c *fiber.Ctx, err error) error {
@@ -21,6 +22,11 @@ var ErrorHandler = func(c *fiber.Ctx, err error) error {
 	var validationErrorsResponse *[]rest.ValidationErrorResponse
 	if valErrsResponse, ok := c.Locals("validation_errors_response").([]rest.ValidationErrorResponse); ok {
 		validationErrorsResponse = &valErrsResponse
+	}
+
+	switch err {
+	case mongo.ErrNoDocuments:
+		code = fiber.StatusNotFound
 	}
 
 	response := rest.NewErrorResponse(err.Error(), validationErrorsResponse)
