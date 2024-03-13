@@ -48,7 +48,7 @@ func ParseAndValidateRequest[T any](c *fiber.Ctx, request *T, options ParseOptio
 	// validate
 	if err := validate.Struct(request); err != nil {
 		errs := err.(validator.ValidationErrors)
-		validationErrorsResponse := parseValidationError[T](c, errs, *request)
+		validationErrorsResponse := parseValidationError[T](errs, *request)
 		c.Locals("validation_errors_response", validationErrorsResponse)
 
 		return err
@@ -57,7 +57,7 @@ func ParseAndValidateRequest[T any](c *fiber.Ctx, request *T, options ParseOptio
 	return nil
 }
 
-func parseValidationError[T any](c *fiber.Ctx, errs validator.ValidationErrors, request T) []rest.ValidationErrorResponse {
+func parseValidationError[T any](errs validator.ValidationErrors, request T) []rest.ValidationErrorResponse {
 	var validationErrorsResponse []rest.ValidationErrorResponse
 
 	// get json tags
