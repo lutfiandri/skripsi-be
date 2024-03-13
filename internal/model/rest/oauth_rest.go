@@ -3,8 +3,6 @@
 package rest
 
 type OAuthAuthorizeRequest struct {
-	Email        string `json:"email" validate:"required"`
-	Password     string `json:"password" validate:"required"`
 	ClientId     string `query:"client_id" validate:"required"`
 	RedirectUri  string `query:"redirect_uri" validate:"required"`
 	State        string `query:"state" validate:"required"`

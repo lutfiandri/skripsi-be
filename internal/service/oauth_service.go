@@ -11,11 +11,10 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type OAuthService interface {
-	Authorize(ctx context.Context, request rest.OAuthAuthorizeRequest) error
+	Authorize(ctx context.Context, claims rest.JWTClaims, request rest.OAuthAuthorizeRequest) error
 	Token(ctx context.Context, request rest.OAuthTokenRequest) (rest.OAuthTokenResponse, error)
 }
 
@@ -33,7 +32,7 @@ func NewOAuthService(oauthClientRepository repository.OAuthClientRepository, oau
 	}
 }
 
-func (service *oauthService) Authorize(ctx context.Context, request rest.OAuthAuthorizeRequest) error {
+func (service *oauthService) Authorize(ctx context.Context, claims rest.JWTClaims, request rest.OAuthAuthorizeRequest) error {
 	// check response_type must be code
 	if request.ResponseType != "code" {
 		return fiber.NewError(fiber.StatusBadRequest, "response_type must be 'code'")
@@ -50,20 +49,15 @@ func (service *oauthService) Authorize(ctx context.Context, request rest.OAuthAu
 		return fiber.NewError(fiber.StatusBadRequest, "wrong redirect_uri")
 	}
 
-	// user login -> check credential
-	user, err := service.userRepository.GetUserByEmail(ctx, request.Email)
-	if err != nil {
-		return fiber.NewError(fiber.StatusUnauthorized, "invalid credentials")
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
-		return fiber.NewError(fiber.StatusUnauthorized, "invalid credentials")
+	// check user exists
+	if _, err := service.userRepository.GetUserById(ctx, claims.User.Id); err != nil {
+		return err
 	}
 
 	authCode := domain.OAuthAuthCode{
 		Id:        uuid.NewString(),
 		AuthCode:  uuid.NewString(),
-		UserId:    user.Id,
+		UserId:    claims.User.Id,
 		CreatedAt: time.Now(),
 	}
 
@@ -93,17 +87,20 @@ func (service *oauthService) Token(ctx context.Context, request rest.OAuthTokenR
 
 	switch request.GrantType {
 	case "authorization_code":
-		// authCode, err := service.oauthAuthCodeRepository.GetAuthCodeByCode(ctx, request.Code)
-		// if err != nil {
-		// 	return rest.OAuthTokenResponse{}, err
-		// }
+	// authCode, err := service.oauthAuthCodeRepository.GetAuthCodeByCode(ctx, request.Code)
+	// if err != nil {
+	// 	return rest.OAuthTokenResponse{}, err
+	// }
 
-		// user, err := service.userRepository.GetUserById(ctx, authCode.UserId)
-		// if err != nil {
-		// 	return rest.OAuthTokenResponse{}, err
-		// }
+	// user, err := service.userRepository.GetUserById(ctx, authCode.UserId)
+	// if err != nil {
+	// 	return rest.OAuthTokenResponse{}, err
+	// }
 
-		// case "refresh_token":
+	// case "refresh_token":
+
+	default:
+		return rest.OAuthTokenResponse{}, fiber.NewError(fiber.StatusUnauthorized, "'grant_type' must be 'authorization_code' or 'refresh_token'")
 	}
 
 	panic("unimplemented")

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"skripsi-be/internal/middleware"
 	"skripsi-be/internal/model/rest"
 	"skripsi-be/internal/service"
 	"skripsi-be/internal/util/helper"
@@ -29,18 +30,20 @@ func NewOAuthController(app *fiber.App, service service.OAuthService) OAuthContr
 func (controller *oauthController) InitHttpRoute() {
 	api := controller.app.Group("/oauth2/auth")
 
-	api.Post("/authorize", controller.Authorize)
+	api.Post("/authorize", middleware.NewAuthenticator(), controller.Authorize)
 	api.Post("/token", controller.Token)
 }
 
 func (controller *oauthController) Authorize(c *fiber.Ctx) error {
+	claims := c.Locals("claims").(rest.JWTClaims)
+
 	var request rest.OAuthAuthorizeRequest
-	parseOption := helper.ParseOptions{ParseBody: true, ParseQuery: true}
+	parseOption := helper.ParseOptions{ParseQuery: true}
 	if err := helper.ParseAndValidateRequest[rest.OAuthAuthorizeRequest](c, &request, parseOption); err != nil {
 		return err
 	}
 
-	err := controller.service.Authorize(c.Context(), request)
+	err := controller.service.Authorize(c.Context(), claims, request)
 	if err != nil {
 		return err
 	}
