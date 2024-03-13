@@ -131,7 +131,36 @@ func (service *oauthService) Token(ctx context.Context, request rest.OAuthTokenR
 		}
 		return response, nil
 
-	// case "refresh_token":
+	case "refresh_token":
+		log.Println("refresh token")
+		refreshClaims, err := helper.ParseRefreshJwt(request.RefreshToken)
+		if err != nil {
+			return rest.OAuthTokenResponse{}, err
+		}
+		log.Println("claims", refreshClaims)
+
+		user, err := service.userRepository.GetUserById(ctx, refreshClaims.User.Id)
+		if err != nil {
+			return rest.OAuthTokenResponse{}, err
+		}
+
+		userClaimsData := rest.JWTUserClaimsData{
+			Id:    user.Id,
+			Email: user.Email,
+			Name:  user.Name,
+		}
+
+		accessToken, err := helper.GenerateJwt(userClaimsData)
+		if err != nil {
+			return rest.OAuthTokenResponse{}, err
+		}
+
+		response := rest.OAuthTokenResponse{
+			TokenType:   "Bearer",
+			AccessToken: accessToken, // 1 hour
+			ExpiresIn:   60 * 60,     // 1 hour
+		}
+		return response, nil
 
 	default:
 		return rest.OAuthTokenResponse{}, fiber.NewError(fiber.StatusUnauthorized, "'grant_type' must be 'authorization_code' or 'refresh_token'")
@@ -145,6 +174,5 @@ func (service *oauthService) generateRedirectUris(baseUrl, code, state string) s
 	queryParams.Set("state", state)
 
 	redirectUri := fmt.Sprintf("%s?%s", baseUrl, queryParams.Encode())
-	log.Println("redirectUri", redirectUri)
 	return redirectUri
 }
