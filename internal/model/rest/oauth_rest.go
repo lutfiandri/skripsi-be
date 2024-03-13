@@ -2,6 +2,7 @@
 
 package rest
 
+// /authorize
 type OAuthAuthorizeRequest struct {
 	ClientId     string `query:"client_id" validate:"required"`
 	RedirectUri  string `query:"redirect_uri" validate:"required"`
@@ -9,6 +10,10 @@ type OAuthAuthorizeRequest struct {
 	ResponseType string `query:"response_type"`
 	// Scope string
 	// UserLocale string
+}
+
+type OAuthAuthorizeResponse struct {
+	RedirectUri string `json:"redirect_uri"`
 }
 
 type OAuthTokenRequest struct {
@@ -20,6 +25,7 @@ type OAuthTokenRequest struct {
 	RedirectUri  string `query:"redirect_uri"`
 }
 
+// /token
 type OAuthTokenResponse struct {
 	TokenType    string `json:"token_type"` // "Bearer"
 	AccessToken  string `json:"access_token"`

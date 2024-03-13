@@ -43,12 +43,12 @@ func (controller *oauthController) Authorize(c *fiber.Ctx) error {
 		return err
 	}
 
-	err := controller.service.Authorize(c.Context(), claims, request)
+	result, err := controller.service.Authorize(c.Context(), claims, request)
 	if err != nil {
 		return err
 	}
 
-	response := rest.NewSuccessResponse(nil)
+	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
 }

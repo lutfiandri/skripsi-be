@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"net/url"
 	"slices"
 	"time"
 
@@ -14,7 +17,7 @@ import (
 )
 
 type OAuthService interface {
-	Authorize(ctx context.Context, claims rest.JWTClaims, request rest.OAuthAuthorizeRequest) error
+	Authorize(ctx context.Context, claims rest.JWTClaims, request rest.OAuthAuthorizeRequest) (rest.OAuthAuthorizeResponse, error)
 	Token(ctx context.Context, request rest.OAuthTokenRequest) (rest.OAuthTokenResponse, error)
 }
 
@@ -32,26 +35,26 @@ func NewOAuthService(oauthClientRepository repository.OAuthClientRepository, oau
 	}
 }
 
-func (service *oauthService) Authorize(ctx context.Context, claims rest.JWTClaims, request rest.OAuthAuthorizeRequest) error {
+func (service *oauthService) Authorize(ctx context.Context, claims rest.JWTClaims, request rest.OAuthAuthorizeRequest) (rest.OAuthAuthorizeResponse, error) {
 	// check response_type must be code
 	if request.ResponseType != "code" {
-		return fiber.NewError(fiber.StatusBadRequest, "response_type must be 'code'")
+		return rest.OAuthAuthorizeResponse{}, fiber.NewError(fiber.StatusBadRequest, "response_type must be 'code'")
 	}
 
 	// check client_id
 	client, err := service.oauthClientRepository.GetOAuthClientById(ctx, request.ClientId)
 	if err != nil {
-		return err
+		return rest.OAuthAuthorizeResponse{}, err
 	}
 
 	// check redirect_uri
 	if !slices.Contains(client.RedirectUris, request.RedirectUri) {
-		return fiber.NewError(fiber.StatusBadRequest, "wrong redirect_uri")
+		return rest.OAuthAuthorizeResponse{}, fiber.NewError(fiber.StatusBadRequest, "wrong redirect_uri")
 	}
 
 	// check user exists
 	if _, err := service.userRepository.GetUserById(ctx, claims.User.Id); err != nil {
-		return err
+		return rest.OAuthAuthorizeResponse{}, err
 	}
 
 	authCode := domain.OAuthAuthCode{
@@ -62,10 +65,15 @@ func (service *oauthService) Authorize(ctx context.Context, claims rest.JWTClaim
 	}
 
 	if err := service.oauthAuthCodeRepository.InsertAuthCode(ctx, authCode); err != nil {
-		return err
+		return rest.OAuthAuthorizeResponse{}, err
 	}
 
-	return nil
+	// generate full redirect_uri
+
+	response := rest.OAuthAuthorizeResponse{
+		RedirectUri: service.generateRedirectUris(request.RedirectUri, authCode.AuthCode, request.State),
+	}
+	return response, nil
 }
 
 func (service *oauthService) Token(ctx context.Context, request rest.OAuthTokenRequest) (rest.OAuthTokenResponse, error) {
@@ -103,5 +111,16 @@ func (service *oauthService) Token(ctx context.Context, request rest.OAuthTokenR
 		return rest.OAuthTokenResponse{}, fiber.NewError(fiber.StatusUnauthorized, "'grant_type' must be 'authorization_code' or 'refresh_token'")
 	}
 
-	panic("unimplemented")
+	return rest.OAuthTokenResponse{}, fiber.ErrInternalServerError
+}
+
+// helper funcs
+func (service *oauthService) generateRedirectUris(baseUrl, code, state string) string {
+	queryParams := url.Values{}
+	queryParams.Set("code", code)
+	queryParams.Set("state", state)
+
+	redirectUri := fmt.Sprintf("%s?%s", baseUrl, queryParams.Encode())
+	log.Println("redirectUri", redirectUri)
+	return redirectUri
 }
