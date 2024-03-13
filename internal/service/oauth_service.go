@@ -11,6 +11,7 @@ import (
 	"skripsi-be/internal/model/domain"
 	"skripsi-be/internal/model/rest"
 	"skripsi-be/internal/repository"
+	"skripsi-be/internal/util/helper"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -85,33 +86,56 @@ func (service *oauthService) Token(ctx context.Context, request rest.OAuthTokenR
 
 	// check redirect_uri
 	if !slices.Contains(client.RedirectUris, request.RedirectUri) {
-		return rest.OAuthTokenResponse{}, fiber.NewError(fiber.StatusBadRequest, "wrong redirect_uri")
+		return rest.OAuthTokenResponse{}, fiber.NewError(fiber.StatusBadRequest, "invalid_grant")
 	}
 
 	// check client_secret
 	if client.Secret != request.ClientSecret {
-		return rest.OAuthTokenResponse{}, fiber.NewError(fiber.StatusBadRequest, "wrong client_secret")
+		return rest.OAuthTokenResponse{}, fiber.NewError(fiber.StatusBadRequest, "invalid_grant")
 	}
 
 	switch request.GrantType {
 	case "authorization_code":
-	// authCode, err := service.oauthAuthCodeRepository.GetAuthCodeByCode(ctx, request.Code)
-	// if err != nil {
-	// 	return rest.OAuthTokenResponse{}, err
-	// }
 
-	// user, err := service.userRepository.GetUserById(ctx, authCode.UserId)
-	// if err != nil {
-	// 	return rest.OAuthTokenResponse{}, err
-	// }
+		authCode, err := service.oauthAuthCodeRepository.GetAuthCodeByCode(ctx, request.Code)
+		if err != nil {
+			log.Println(request.Code, err)
+			return rest.OAuthTokenResponse{}, err
+		}
+
+		user, err := service.userRepository.GetUserById(ctx, authCode.UserId)
+		if err != nil {
+			return rest.OAuthTokenResponse{}, err
+		}
+
+		userClaimsData := rest.JWTUserClaimsData{
+			Id:    user.Id,
+			Email: user.Email,
+			Name:  user.Name,
+		}
+
+		accessToken, err := helper.GenerateJwt(userClaimsData)
+		if err != nil {
+			return rest.OAuthTokenResponse{}, err
+		}
+		refreshToken, err := helper.GenerateRefreshJwt(userClaimsData)
+		if err != nil {
+			return rest.OAuthTokenResponse{}, err
+		}
+
+		response := rest.OAuthTokenResponse{
+			TokenType:    "Bearer",
+			AccessToken:  accessToken,  // 1 hour
+			RefreshToken: refreshToken, // doesn't expire
+			ExpiresIn:    60 * 60,      // 1 hour
+		}
+		return response, nil
 
 	// case "refresh_token":
 
 	default:
 		return rest.OAuthTokenResponse{}, fiber.NewError(fiber.StatusUnauthorized, "'grant_type' must be 'authorization_code' or 'refresh_token'")
 	}
-
-	return rest.OAuthTokenResponse{}, fiber.ErrInternalServerError
 }
 
 // helper funcs

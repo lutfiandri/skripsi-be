@@ -14,3 +14,8 @@ type JWTClaims struct {
 	jwt.StandardClaims
 	User JWTUserClaimsData `json:"user"`
 }
+
+type JWTRefreshClaims struct {
+	jwt.StandardClaims
+	User JWTUserClaimsData `json:"user"`
+}

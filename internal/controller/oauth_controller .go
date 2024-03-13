@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"log"
+
 	"skripsi-be/internal/middleware"
 	"skripsi-be/internal/model/rest"
 	"skripsi-be/internal/service"
@@ -67,6 +69,7 @@ func (controller *oauthController) Token(c *fiber.Ctx) error {
 
 	result, err := controller.service.Token(c.Context(), request)
 	if err != nil {
+		log.Println(err)
 		return c.Status(fiber.StatusUnauthorized).JSON(errorResponse)
 	}
 
