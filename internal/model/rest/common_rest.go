@@ -12,9 +12,10 @@ type ErrorResponse struct {
 }
 
 type ValidationErrorResponse struct {
-	FailedField string `json:"failed_field"`
-	Tag         string `json:"tag"`
-	Value       string `json:"value"`
+	Field string `json:"field"`
+	Type  string `json:"type"`
+	Tag   string `json:"tag"`
+	Value string `json:"value"`
 }
 
 func NewSuccessResponse(data interface{}) SuccessResponse {
