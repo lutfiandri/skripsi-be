@@ -68,8 +68,14 @@ func (service *authService) Register(ctx context.Context, request rest.RegisterR
 		return rest.RegisterResponse{}, nil
 	}
 
+	refreshToken, err := helper.GenerateRefreshJwt(userClaimsData)
+	if err != nil {
+		return rest.RegisterResponse{}, nil
+	}
+
 	response := rest.RegisterResponse{
-		AccessToken: accessToken,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}
 
 	return response, nil
@@ -96,8 +102,14 @@ func (service *authService) Login(ctx context.Context, request rest.LoginRequest
 		return rest.LoginResponse{}, err
 	}
 
+	refreshToken, err := helper.GenerateRefreshJwt(userClaimsData)
+	if err != nil {
+		return rest.LoginResponse{}, err
+	}
+
 	response := rest.LoginResponse{
-		AccessToken: accessToken,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}
 
 	return response, nil
