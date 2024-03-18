@@ -18,6 +18,8 @@ type OAuthClientService interface {
 	GetOAuthClient(ctx context.Context, claims rest.JWTClaims, request rest.GetOAuthClientRequest) (rest.OAuthClientResponse, error)
 	UpdateOAuthClient(ctx context.Context, claims rest.JWTClaims, request rest.UpdateOAuthClientRequest) (rest.OAuthClientResponse, error)
 	DeleteOAuthClient(ctx context.Context, claims rest.JWTClaims, request rest.DeleteOAuthClientRequest) error
+
+	GetOAuthClientPublic(ctx context.Context, request rest.GetOAuthClientRequest) (rest.OAuthClientPublicResponse, error)
 }
 
 type oauthClientService struct {
@@ -102,4 +104,15 @@ func (service *oauthClientService) DeleteOAuthClient(ctx context.Context, claims
 
 	err = service.oauthClientRepository.DeleteOAuthClient(ctx, request.Id)
 	return err
+}
+
+func (service *oauthClientService) GetOAuthClientPublic(ctx context.Context, request rest.GetOAuthClientRequest) (rest.OAuthClientPublicResponse, error) {
+	oauthClient, err := service.oauthClientRepository.GetOAuthClientById(ctx, request.Id)
+	if err != nil {
+		return rest.OAuthClientPublicResponse{}, err
+	}
+
+	response := modelfactory.OAuthClientPublicDbToRest(oauthClient)
+
+	return response, nil
 }

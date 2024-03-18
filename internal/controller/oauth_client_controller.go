@@ -16,6 +16,8 @@ type OAuthClientController interface {
 	GetOAuthClient(c *fiber.Ctx) error
 	UpdateOAuthClient(c *fiber.Ctx) error
 	DeleteOAuthClient(c *fiber.Ctx) error
+
+	GetOAuthClientPublic(c *fiber.Ctx) error
 }
 
 type oauthClientController struct {
@@ -38,6 +40,8 @@ func (controller *oauthClientController) InitHttpRoute() {
 	api.Get("/:id", middleware.NewAuthenticator(), controller.GetOAuthClient)
 	api.Put("/:id", middleware.NewAuthenticator(), controller.UpdateOAuthClient)
 	api.Delete("/:id", middleware.NewAuthenticator(), controller.DeleteOAuthClient)
+
+	api.Get("/:id/public", controller.GetOAuthClientPublic)
 }
 
 func (controller *oauthClientController) CreateOAuthClient(c *fiber.Ctx) error {
@@ -125,6 +129,23 @@ func (controller *oauthClientController) DeleteOAuthClient(c *fiber.Ctx) error {
 	}
 
 	response := rest.NewSuccessResponse(nil)
+
+	return c.JSON(response)
+}
+
+func (controller *oauthClientController) GetOAuthClientPublic(c *fiber.Ctx) error {
+	var request rest.GetOAuthClientRequest
+	parseOption := helper.ParseOptions{ParseParams: true}
+	if err := helper.ParseAndValidateRequest[rest.GetOAuthClientRequest](c, &request, parseOption); err != nil {
+		return err
+	}
+
+	result, err := controller.service.GetOAuthClientPublic(c.Context(), request)
+	if err != nil {
+		return err
+	}
+
+	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
 }

@@ -11,6 +11,11 @@ type OAuthClientResponse struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+type OAuthClientPublicResponse struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type GetOAuthClientRequest struct {
 	Id string `params:"id" validate:"required"`
 }

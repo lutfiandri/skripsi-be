@@ -28,6 +28,15 @@ func OAuthClientDbToRestMany(oauthClients []domain.OAuthClient) []rest.OAuthClie
 	return results
 }
 
+func OAuthClientPublicDbToRest(oauthClient domain.OAuthClient) rest.OAuthClientPublicResponse {
+	result := rest.OAuthClientPublicResponse{
+		Id:   oauthClient.Id,
+		Name: oauthClient.Name,
+	}
+
+	return result
+}
+
 // Rest to DB
 
 func CreateOAuthClientRestToDb(oauthClient rest.CreateOAuthClientRequest) domain.OAuthClient {
