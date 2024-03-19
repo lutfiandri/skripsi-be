@@ -47,6 +47,11 @@ func main() {
 	oauthClientController := controller.NewOAuthClientController(app, oauthClientService)
 	oauthClientController.InitHttpRoute()
 
+	oauthScopeRepository := repository.NewOAuthScopeRepository(mongo, "oauth_scopes")
+	oauthScopeService := service.NewOAuthScopeService(oauthScopeRepository)
+	oauthScopeController := controller.NewOAuthScopeController(app, oauthScopeService)
+	oauthScopeController.InitHttpRoute()
+
 	oauthAuthCodeRepository := repository.NewOAuthAuthCodeRepository(mongo, "oauth_auth")
 
 	oauthService := service.NewOAuthService(oauthClientRepository, oauthAuthCodeRepository, userRepository)
