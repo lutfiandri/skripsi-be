@@ -48,7 +48,7 @@ func ParseAndValidateRequest[T any](c *fiber.Ctx, request *T, options ParseOptio
 	// validate
 	if err := validate.Struct(request); err != nil {
 		errs := err.(validator.ValidationErrors)
-		validationErrorsResponse := parseValidationError[T](c, errs, *request)
+		validationErrorsResponse := parseValidationError[T](errs, *request)
 		c.Locals("validation_errors_response", validationErrorsResponse)
 
 		return err
@@ -57,23 +57,30 @@ func ParseAndValidateRequest[T any](c *fiber.Ctx, request *T, options ParseOptio
 	return nil
 }
 
-func parseValidationError[T any](c *fiber.Ctx, errs validator.ValidationErrors, request T) []rest.ValidationErrorResponse {
+func parseValidationError[T any](errs validator.ValidationErrors, request T) []rest.ValidationErrorResponse {
 	var validationErrorsResponse []rest.ValidationErrorResponse
 
 	// get json tags
-	jsonTags := make(map[string]string)
+	fieldNameMap := make(map[string]string)
+	fieldTypeMap := make(map[string]string)
 	t := reflect.TypeOf(request)
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		jsonTags[field.Name] = field.Tag.Get("json")
+
+		fieldName, fieldType := getFieldNameAndType(field)
+
+		fieldNameMap[field.Name] = fieldName
+		fieldTypeMap[field.Name] = fieldType
+
 	}
 
 	// create error list
 	for _, err := range errs {
 		var element rest.ValidationErrorResponse
 
-		element.FailedField = jsonTags[err.Field()]
+		element.Field = fieldNameMap[err.Field()]
+		element.Type = fieldTypeMap[err.Field()]
 		element.Tag = err.Tag()
 		element.Value = err.Param()
 
@@ -81,4 +88,21 @@ func parseValidationError[T any](c *fiber.Ctx, errs validator.ValidationErrors, 
 	}
 
 	return validationErrorsResponse
+}
+
+func getFieldNameAndType(field reflect.StructField) (string, string) {
+	fieldName := field.Tag.Get("json")
+	fieldType := "json"
+
+	if fieldName == "" {
+		fieldName = field.Tag.Get("query")
+		fieldType = "query"
+	}
+
+	if fieldName == "" {
+		fieldName = field.Tag.Get("params")
+		fieldType = "params"
+	}
+
+	return fieldName, fieldType
 }

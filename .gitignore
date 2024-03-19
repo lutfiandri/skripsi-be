@@ -26,3 +26,6 @@ tmp
 
 # Env
 .env
+
+# Text Editor
+.vscode
