@@ -6,16 +6,17 @@ import (
 
 	"skripsi-be/internal/domain"
 
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Repository interface {
 	GetDeviceTypes(ctx context.Context) ([]domain.DeviceType, error)
-	GetDeviceTypeById(ctx context.Context, id string) (domain.DeviceType, error)
+	GetDeviceTypeById(ctx context.Context, id uuid.UUID) (domain.DeviceType, error)
 	CreateDeviceType(ctx context.Context, deviceType domain.DeviceType) error
 	UpdateDeviceType(ctx context.Context, deviceType domain.DeviceType) error
-	DeleteDeviceType(ctx context.Context, id string) error
+	DeleteDeviceType(ctx context.Context, id uuid.UUID) error
 }
 
 type repository struct {
@@ -53,7 +54,7 @@ func (repository repository) GetDeviceTypes(ctx context.Context) ([]domain.Devic
 	return deviceTypes, nil
 }
 
-func (repository repository) GetDeviceTypeById(ctx context.Context, id string) (domain.DeviceType, error) {
+func (repository repository) GetDeviceTypeById(ctx context.Context, id uuid.UUID) (domain.DeviceType, error) {
 	var deviceType domain.DeviceType
 
 	filter := bson.M{"_id": id, "deleted_at": nil}
@@ -87,7 +88,7 @@ func (repository repository) UpdateDeviceType(ctx context.Context, deviceType do
 	return nil
 }
 
-func (repository repository) DeleteDeviceType(ctx context.Context, id string) error {
+func (repository repository) DeleteDeviceType(ctx context.Context, id uuid.UUID) error {
 	filter := bson.M{"_id": id, "deleted_at": nil}
 	update := bson.M{"$set": bson.M{
 		"deleted_at": time.Now(),

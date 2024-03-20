@@ -39,7 +39,12 @@ func (service service) GetDeviceTypes(c *fiber.Ctx) ([]DeviceTypeResponse, error
 }
 
 func (service service) GetDeviceType(c *fiber.Ctx, request GetDeviceTypeRequest) (DeviceTypeResponse, error) {
-	result, err := service.repository.GetDeviceTypeById(c.Context(), request.Id)
+	id, err := uuid.Parse(request.Id)
+	if err != nil {
+		return DeviceTypeResponse{}, ErrNotFound
+	}
+
+	result, err := service.repository.GetDeviceTypeById(c.Context(), id)
 	if err != nil {
 		return DeviceTypeResponse{}, err
 	}
@@ -71,12 +76,12 @@ func (service service) CreateDeviceType(c *fiber.Ctx, request CreateDeviceTypeRe
 }
 
 func (service service) UpdateDeviceType(c *fiber.Ctx, request UpdateDeviceTypeRequest) (DeviceTypeResponse, error) {
-	prev, err := service.repository.GetDeviceTypeById(c.Context(), request.Id)
+	id, err := uuid.Parse(request.Id)
 	if err != nil {
 		return DeviceTypeResponse{}, ErrNotFound
 	}
 
-	id, err := uuid.Parse(request.Id)
+	prev, err := service.repository.GetDeviceTypeById(c.Context(), id)
 	if err != nil {
 		return DeviceTypeResponse{}, ErrNotFound
 	}
@@ -101,12 +106,16 @@ func (service service) UpdateDeviceType(c *fiber.Ctx, request UpdateDeviceTypeRe
 }
 
 func (service service) DeleteDeviceType(c *fiber.Ctx, request DeleteDeviceTypeRequest) error {
-	if _, err := service.repository.GetDeviceTypeById(c.Context(), request.Id); err != nil {
+	id, err := uuid.Parse(request.Id)
+	if err != nil {
 		return ErrNotFound
 	}
 
-	err := service.repository.DeleteDeviceType(c.Context(), request.Id)
-	if err != nil {
+	if _, err := service.repository.GetDeviceTypeById(c.Context(), id); err != nil {
+		return ErrNotFound
+	}
+
+	if err := service.repository.DeleteDeviceType(c.Context(), id); err != nil {
 		return err
 	}
 

@@ -26,10 +26,10 @@ func NewRepository(database *mongo.Database) Repository {
 	}
 }
 
-func (repository *repository) GetUserByEmail(ctx context.Context, id string) (domain.User, error) {
+func (repository *repository) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
 	var user domain.User
 
-	filter := bson.M{"_id": id}
+	filter := bson.M{"email": email}
 
 	if err := repository.userCollection.FindOne(ctx, filter).Decode(&user); err != nil {
 		return user, err
@@ -38,7 +38,7 @@ func (repository *repository) GetUserByEmail(ctx context.Context, id string) (do
 	return user, nil
 }
 
-func (repository *repository) UpsertUser(ctx context.Context, user domain.User) error {
+func (repository *repository) UpdateUser(ctx context.Context, user domain.User) error {
 	filter := bson.M{"_id": user.Id}
 	update := bson.M{"$set": user}
 
