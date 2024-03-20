@@ -3,6 +3,10 @@ package main
 import (
 	"log"
 
+	"skripsi-be/internal/app/auth"
+	"skripsi-be/internal/app/device"
+	"skripsi-be/internal/app/device_type"
+	"skripsi-be/internal/app/profile"
 	"skripsi-be/internal/config"
 	"skripsi-be/internal/controller"
 	"skripsi-be/internal/infrastructure"
@@ -23,24 +27,10 @@ func main() {
 	}
 	app := fiber.New(appConfig)
 
-	userRepository := repository.NewUserRepository(mongo, "users")
-	authService := service.NewAuthService(userRepository)
-	authController := controller.NewAuthController(app, authService)
-	authController.InitHttpRoute()
-
-	deviceTypeRepository := repository.NewDeviceTypeRepository(mongo, "device_types")
-	deviceTypeService := service.NewDeviceTypeService(deviceTypeRepository)
-	deviceTypeController := controller.NewDeviceTypeController(app, deviceTypeService)
-	deviceTypeController.InitHttpRoute()
-
-	deviceRepository := repository.NewDeviceRepository(mongo, "devices")
-	deviceService := service.NewDeviceService(deviceRepository)
-	deviceController := controller.NewDeviceController(app, deviceService)
-	deviceController.InitHttpRoute()
-
-	profileService := service.NewProfileService(userRepository)
-	profileController := controller.NewProfileController(app, profileService)
-	profileController.InitHttpRoute()
+	auth.Init(app, mongo)
+	device_type.Init(app, mongo)
+	device.Init(app, mongo)
+	profile.Init(app, mongo)
 
 	oauthClientRepository := repository.NewOAuthClientRepository(mongo, "oauth_clients")
 	oauthClientService := service.NewOAuthClientService(oauthClientRepository)

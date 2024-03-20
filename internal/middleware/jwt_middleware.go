@@ -8,6 +8,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+const (
+	CtxClaims = "claims"
+)
+
 func NewAuthenticator() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
@@ -24,7 +28,7 @@ func NewAuthenticator() fiber.Handler {
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 		}
 
-		c.Locals("claims", claims)
+		c.Locals(CtxClaims, claims)
 		return c.Next()
 	}
 }

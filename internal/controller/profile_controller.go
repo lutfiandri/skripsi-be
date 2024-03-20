@@ -12,7 +12,7 @@ import (
 type ProfileController interface {
 	InitHttpRoute()
 	GetProfile(c *fiber.Ctx) error
-	EditProfile(c *fiber.Ctx) error
+	UpdateProfile(c *fiber.Ctx) error
 }
 
 type profileController struct {
@@ -30,7 +30,7 @@ func NewProfileController(app *fiber.App, service service.ProfileService) Profil
 func (controller *profileController) InitHttpRoute() {
 	api := controller.app.Group("/profile")
 	api.Get("/", middleware.NewAuthenticator(), controller.GetProfile)
-	api.Put("/", middleware.NewAuthenticator(), controller.EditProfile)
+	api.Put("/", middleware.NewAuthenticator(), controller.UpdateProfile)
 }
 
 func (controller *profileController) GetProfile(c *fiber.Ctx) error {
@@ -46,16 +46,16 @@ func (controller *profileController) GetProfile(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-func (controller *profileController) EditProfile(c *fiber.Ctx) error {
+func (controller *profileController) UpdateProfile(c *fiber.Ctx) error {
 	claims := c.Locals("claims").(rest.JWTClaims)
 
-	var request rest.EditProfileRequest
+	var request rest.UpdateProfileRequest
 	parseOption := helper.ParseOptions{ParseBody: true}
-	if err := helper.ParseAndValidateRequest[rest.EditProfileRequest](c, &request, parseOption); err != nil {
+	if err := helper.ParseAndValidateRequest[rest.UpdateProfileRequest](c, &request, parseOption); err != nil {
 		return err
 	}
 
-	result, err := controller.service.EditProfile(c.Context(), claims, request)
+	result, err := controller.service.UpdateProfile(c.Context(), claims, request)
 	if err != nil {
 		return err
 	}

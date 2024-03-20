@@ -12,7 +12,7 @@ import (
 
 type ProfileService interface {
 	GetProfile(ctx context.Context, claims rest.JWTClaims) (rest.ProfileResponse, error)
-	EditProfile(ctx context.Context, claims rest.JWTClaims, request rest.EditProfileRequest) (rest.ProfileResponse, error)
+	UpdateProfile(ctx context.Context, claims rest.JWTClaims, request rest.UpdateProfileRequest) (rest.ProfileResponse, error)
 }
 
 type profileService struct {
@@ -37,7 +37,7 @@ func (service *profileService) GetProfile(ctx context.Context, claims rest.JWTCl
 	return response, nil
 }
 
-func (service *profileService) EditProfile(ctx context.Context, claims rest.JWTClaims, request rest.EditProfileRequest) (rest.ProfileResponse, error) {
+func (service *profileService) UpdateProfile(ctx context.Context, claims rest.JWTClaims, request rest.UpdateProfileRequest) (rest.ProfileResponse, error) {
 	service.Lock()
 	defer service.Unlock()
 
