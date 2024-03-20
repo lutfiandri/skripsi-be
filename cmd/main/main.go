@@ -7,6 +7,7 @@ import (
 	"skripsi-be/internal/app/device"
 	"skripsi-be/internal/app/device_type"
 	"skripsi-be/internal/app/oauth_client"
+	"skripsi-be/internal/app/oauth_scope"
 	"skripsi-be/internal/app/profile"
 	"skripsi-be/internal/config"
 	"skripsi-be/internal/controller"
@@ -33,11 +34,7 @@ func main() {
 	device.Init(app, mongo)
 	profile.Init(app, mongo)
 	oauth_client.Init(app, mongo)
-
-	oauthScopeRepository := repository.NewOAuthScopeRepository(mongo, "oauth_scopes")
-	oauthScopeService := service.NewOAuthScopeService(oauthScopeRepository)
-	oauthScopeController := controller.NewOAuthScopeController(app, oauthScopeService)
-	oauthScopeController.InitHttpRoute()
+	oauth_scope.Init(app, mongo)
 
 	oauthAuthCodeRepository := repository.NewOAuthAuthCodeRepository(mongo, "oauth_auth")
 
