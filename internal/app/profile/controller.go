@@ -1,7 +1,7 @@
 package profile
 
 import (
-	"skripsi-be/internal/model/rest"
+	"skripsi-be/internal/interface/rest"
 	"skripsi-be/internal/util/helper"
 
 	"github.com/gofiber/fiber/v2"
