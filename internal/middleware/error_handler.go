@@ -3,7 +3,7 @@ package middleware
 import (
 	"errors"
 
-	"skripsi-be/internal/model/rest"
+	"skripsi-be/internal/interface/rest"
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/mongo"

@@ -4,17 +4,23 @@ import (
 	"time"
 
 	"skripsi-be/internal/config"
-	"skripsi-be/internal/model/rest"
+	"skripsi-be/internal/domain"
+	"skripsi-be/internal/interface/rest"
 
 	"github.com/golang-jwt/jwt"
 )
 
-func GenerateJwt(userClaimsData rest.JWTUserClaimsData) (string, error) {
+// access token
+func GenerateJwt(user domain.User) (string, error) {
 	claims := rest.JWTClaims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour).Unix(), // 1 hour (google's requirement)
 		},
-		User: userClaimsData,
+		User: rest.JWTUserClaimsData{
+			Id:    user.Id.String(),
+			Email: user.Email,
+			Name:  user.Name,
+		},
 	}
 
 	tokens := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -33,12 +39,17 @@ func ParseJwt(tokenString string) (rest.JWTClaims, error) {
 	return claims, err
 }
 
-func GenerateRefreshJwt(userClaimsData rest.JWTUserClaimsData) (string, error) {
+// refresh token
+func GenerateRefreshJwt(user domain.User) (string, error) {
 	claims := rest.JWTRefreshClaims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(999999 * time.Hour).Unix(), // doesn't expire (google's requirement)
 		},
-		User: userClaimsData,
+		User: rest.JWTUserClaimsData{
+			Id:    user.Id.String(),
+			Email: user.Email,
+			Name:  user.Name,
+		},
 	}
 	tokens := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return tokens.SignedString([]byte(config.JWTRefreshSecretKey))
