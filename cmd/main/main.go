@@ -27,7 +27,9 @@ func main() {
 		ErrorHandler: middleware.ErrorHandler,
 	}
 	app := fiber.New(appConfig)
-	app.Use(recover.New())
+	app.Use(recover.New(recover.Config{
+		EnableStackTrace: true,
+	}))
 
 	auth.Init(app, mongo)
 	device_type.Init(app, mongo)

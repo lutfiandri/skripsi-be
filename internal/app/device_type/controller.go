@@ -28,11 +28,7 @@ func NewController(app *fiber.App, service Service) Controller {
 }
 
 func (controller controller) GetDeviceTypes(c *fiber.Ctx) error {
-	deviceTypes, err := controller.service.GetDeviceTypes(c)
-	if err != nil {
-		return err
-	}
-
+	deviceTypes := controller.service.GetDeviceTypes(c)
 	response := rest.NewSuccessResponse(deviceTypes)
 
 	return c.JSON(response)
@@ -41,15 +37,10 @@ func (controller controller) GetDeviceTypes(c *fiber.Ctx) error {
 func (controller controller) GetDeviceTypeById(c *fiber.Ctx) error {
 	var request GetDeviceTypeRequest
 	parseOption := helper.ParseOptions{ParseParams: true}
-	if err := helper.ParseAndValidateRequest[GetDeviceTypeRequest](c, &request, parseOption); err != nil {
-		return err
-	}
+	err := helper.ParseAndValidateRequest[GetDeviceTypeRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
 
-	result, err := controller.service.GetDeviceType(c, request)
-	if err != nil {
-		return err
-	}
-
+	result := controller.service.GetDeviceType(c, request)
 	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
@@ -58,15 +49,10 @@ func (controller controller) GetDeviceTypeById(c *fiber.Ctx) error {
 func (controller controller) CreateDeviceType(c *fiber.Ctx) error {
 	var request CreateDeviceTypeRequest
 	parseOption := helper.ParseOptions{ParseParams: true, ParseBody: true}
-	if err := helper.ParseAndValidateRequest[CreateDeviceTypeRequest](c, &request, parseOption); err != nil {
-		return err
-	}
+	err := helper.ParseAndValidateRequest[CreateDeviceTypeRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
 
-	result, err := controller.service.CreateDeviceType(c, request)
-	if err != nil {
-		return err
-	}
-
+	result := controller.service.CreateDeviceType(c, request)
 	response := rest.NewSuccessResponse(result)
 
 	return c.Status(fiber.StatusCreated).JSON(response)
@@ -75,15 +61,10 @@ func (controller controller) CreateDeviceType(c *fiber.Ctx) error {
 func (controller controller) UpdateDeviceType(c *fiber.Ctx) error {
 	var request UpdateDeviceTypeRequest
 	parseOption := helper.ParseOptions{ParseParams: true, ParseBody: true}
-	if err := helper.ParseAndValidateRequest[UpdateDeviceTypeRequest](c, &request, parseOption); err != nil {
-		return err
-	}
+	err := helper.ParseAndValidateRequest[UpdateDeviceTypeRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
 
-	result, err := controller.service.UpdateDeviceType(c, request)
-	if err != nil {
-		return err
-	}
-
+	result := controller.service.UpdateDeviceType(c, request)
 	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
@@ -92,14 +73,10 @@ func (controller controller) UpdateDeviceType(c *fiber.Ctx) error {
 func (controller controller) DeleteDeviceType(c *fiber.Ctx) error {
 	var request DeleteDeviceTypeRequest
 	parseOption := helper.ParseOptions{ParseParams: true}
-	if err := helper.ParseAndValidateRequest[DeleteDeviceTypeRequest](c, &request, parseOption); err != nil {
-		return err
-	}
+	err := helper.ParseAndValidateRequest[DeleteDeviceTypeRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
 
-	if err := controller.service.DeleteDeviceType(c, request); err != nil {
-		return err
-	}
-
+	controller.service.DeleteDeviceType(c, request)
 	response := rest.NewSuccessResponse(nil)
 
 	return c.JSON(response)

@@ -11,13 +11,13 @@ import (
 )
 
 type Service interface {
-	CreateOAuthClient(c *fiber.Ctx, request CreateOAuthClientRequest) (OAuthClientResponse, error)
-	GetOAuthClients(c *fiber.Ctx) ([]OAuthClientResponse, error)
-	GetOAuthClient(c *fiber.Ctx, request GetOAuthClientRequest) (OAuthClientResponse, error)
-	UpdateOAuthClient(c *fiber.Ctx, request UpdateOAuthClientRequest) (OAuthClientResponse, error)
-	DeleteOAuthClient(c *fiber.Ctx, request DeleteOAuthClientRequest) error
+	CreateOAuthClient(c *fiber.Ctx, request CreateOAuthClientRequest) OAuthClientResponse
+	GetOAuthClients(c *fiber.Ctx) []OAuthClientResponse
+	GetOAuthClient(c *fiber.Ctx, request GetOAuthClientRequest) OAuthClientResponse
+	UpdateOAuthClient(c *fiber.Ctx, request UpdateOAuthClientRequest) OAuthClientResponse
+	DeleteOAuthClient(c *fiber.Ctx, request DeleteOAuthClientRequest)
 
-	GetOAuthClientPublic(c *fiber.Ctx, request GetOAuthClientRequest) (OAuthClientPublicResponse, error)
+	GetOAuthClientPublic(c *fiber.Ctx, request GetOAuthClientRequest) OAuthClientPublicResponse
 }
 
 type service struct {
@@ -30,11 +30,9 @@ func NewService(repository Repository) Service {
 	}
 }
 
-func (service service) CreateOAuthClient(c *fiber.Ctx, request CreateOAuthClientRequest) (OAuthClientResponse, error) {
+func (service service) CreateOAuthClient(c *fiber.Ctx, request CreateOAuthClientRequest) OAuthClientResponse {
 	clientSecret, err := helper.GenerateClientSecret(64)
-	if err != nil {
-		return OAuthClientResponse{}, err
-	}
+	helper.PanicIfErr(err)
 
 	now := time.Now()
 	oauthClient := domain.OAuthClient{
@@ -46,92 +44,72 @@ func (service service) CreateOAuthClient(c *fiber.Ctx, request CreateOAuthClient
 		UpdatedAt:    now,
 	}
 	err = service.repository.CreateOAuthClient(c.Context(), oauthClient)
-	if err != nil {
-		return OAuthClientResponse{}, err
-	}
+	helper.PanicIfErr(err)
 
 	response := NewResponse(oauthClient)
 
-	return response, nil
+	return response
 }
 
-func (service service) GetOAuthClients(c *fiber.Ctx) ([]OAuthClientResponse, error) {
+func (service service) GetOAuthClients(c *fiber.Ctx) []OAuthClientResponse {
 	oauthClients, err := service.repository.GetOAuthClients(c.Context())
-	if err != nil {
-		return []OAuthClientResponse{}, err
-	}
+	helper.PanicIfErr(err)
 
 	response := NewResponses(oauthClients)
 
-	return response, nil
+	return response
 }
 
-func (service service) GetOAuthClient(c *fiber.Ctx, request GetOAuthClientRequest) (OAuthClientResponse, error) {
+func (service service) GetOAuthClient(c *fiber.Ctx, request GetOAuthClientRequest) OAuthClientResponse {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return OAuthClientResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	oauthClient, err := service.repository.GetOAuthClientById(c.Context(), id)
-	if err != nil {
-		return OAuthClientResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	response := NewResponse(oauthClient)
 
-	return response, nil
+	return response
 }
 
-func (service service) UpdateOAuthClient(c *fiber.Ctx, request UpdateOAuthClientRequest) (OAuthClientResponse, error) {
+func (service service) UpdateOAuthClient(c *fiber.Ctx, request UpdateOAuthClientRequest) OAuthClientResponse {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return OAuthClientResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	oauthClient, err := service.repository.GetOAuthClientById(c.Context(), id)
-	if err != nil {
-		return OAuthClientResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	oauthClient.Name = request.Name
 	oauthClient.RedirectUris = request.RedirectUris
 	oauthClient.UpdatedAt = time.Now()
 
-	if err := service.repository.UpdateOAuthClient(c.Context(), oauthClient); err != nil {
-		return OAuthClientResponse{}, err
-	}
+	err = service.repository.UpdateOAuthClient(c.Context(), oauthClient)
+	helper.PanicIfErr(err)
 
 	response := NewResponse(oauthClient)
 
-	return response, nil
+	return response
 }
 
-func (service service) DeleteOAuthClient(c *fiber.Ctx, request DeleteOAuthClientRequest) error {
+func (service service) DeleteOAuthClient(c *fiber.Ctx, request DeleteOAuthClientRequest) {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
-	if _, err := service.repository.GetOAuthClientById(c.Context(), id); err != nil {
-		return ErrNotFound
-	}
+	_, err = service.repository.GetOAuthClientById(c.Context(), id)
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	err = service.repository.DeleteOAuthClient(c.Context(), id)
-	return err
+	helper.PanicIfErr(err)
 }
 
-func (service service) GetOAuthClientPublic(c *fiber.Ctx, request GetOAuthClientRequest) (OAuthClientPublicResponse, error) {
+func (service service) GetOAuthClientPublic(c *fiber.Ctx, request GetOAuthClientRequest) OAuthClientPublicResponse {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return OAuthClientPublicResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	oauthClient, err := service.repository.GetOAuthClientById(c.Context(), id)
-	if err != nil {
-		return OAuthClientPublicResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	response := NewPublicResponse(oauthClient)
 
-	return response, nil
+	return response
 }

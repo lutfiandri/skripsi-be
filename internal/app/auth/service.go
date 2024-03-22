@@ -12,8 +12,8 @@ import (
 )
 
 type Service interface {
-	Register(c *fiber.Ctx, request RegisterRequest) (RegisterResponse, error)
-	Login(c *fiber.Ctx, request LoginRequest) (LoginResponse, error)
+	Register(c *fiber.Ctx, request RegisterRequest) RegisterResponse
+	Login(c *fiber.Ctx, request LoginRequest) LoginResponse
 }
 
 type service struct {
@@ -26,18 +26,14 @@ func NewService(repository Repository) Service {
 	}
 }
 
-func (service service) Register(c *fiber.Ctx, request RegisterRequest) (RegisterResponse, error) {
+func (service service) Register(c *fiber.Ctx, request RegisterRequest) RegisterResponse {
 	ctx := c.Context()
 
 	_, err := service.repository.GetUserByEmail(c.Context(), request.Email)
-	if err == nil {
-		return RegisterResponse{}, ErrDuplicateEmail
-	}
+	helper.PanicErrIfNotErr(err, ErrDuplicateEmail)
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return RegisterResponse{}, err
-	}
+	helper.PanicIfErr(err)
 
 	now := time.Now()
 	user := domain.User{
@@ -49,54 +45,42 @@ func (service service) Register(c *fiber.Ctx, request RegisterRequest) (Register
 		UpdatedAt: now,
 	}
 
-	if err := service.repository.CreateUser(ctx, user); err != nil {
-		return RegisterResponse{}, err
-	}
+	err = service.repository.CreateUser(ctx, user)
+	helper.PanicIfErr(err)
 
 	accessToken, err := helper.GenerateJwt(user)
-	if err != nil {
-		return RegisterResponse{}, nil
-	}
+	helper.PanicIfErr(err)
 
 	refreshToken, err := helper.GenerateRefreshJwt(user)
-	if err != nil {
-		return RegisterResponse{}, nil
-	}
+	helper.PanicIfErr(err)
 
 	response := RegisterResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}
 
-	return response, nil
+	return response
 }
 
-func (service service) Login(c *fiber.Ctx, request LoginRequest) (LoginResponse, error) {
+func (service service) Login(c *fiber.Ctx, request LoginRequest) LoginResponse {
 	ctx := c.Context()
 
 	user, err := service.repository.GetUserByEmail(ctx, request.Email)
-	if err != nil {
-		return LoginResponse{}, ErrInvalidCredentials
-	}
+	helper.PanicErrIfNotErr(err, ErrInvalidCredentials)
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
-		return LoginResponse{}, ErrInvalidCredentials
-	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
+	helper.PanicIfErr(err)
 
 	accessToken, err := helper.GenerateJwt(user)
-	if err != nil {
-		return LoginResponse{}, err
-	}
+	helper.PanicIfErr(err)
 
 	refreshToken, err := helper.GenerateRefreshJwt(user)
-	if err != nil {
-		return LoginResponse{}, err
-	}
+	helper.PanicIfErr(err)
 
 	response := LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}
 
-	return response, nil
+	return response
 }

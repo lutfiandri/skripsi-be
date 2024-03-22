@@ -1,8 +1,6 @@
 package oauth
 
 import (
-	"log"
-
 	"skripsi-be/internal/interface/rest"
 	"skripsi-be/internal/util/helper"
 
@@ -29,15 +27,10 @@ func NewController(app *fiber.App, service Service) Controller {
 func (controller controller) Authorize(c *fiber.Ctx) error {
 	var request OAuthAuthorizeRequest
 	parseOption := helper.ParseOptions{ParseQuery: true}
-	if err := helper.ParseAndValidateRequest[OAuthAuthorizeRequest](c, &request, parseOption); err != nil {
-		return err
-	}
+	err := helper.ParseAndValidateRequest[OAuthAuthorizeRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
 
-	result, err := controller.service.Authorize(c, request)
-	if err != nil {
-		return err
-	}
-
+	result := controller.service.Authorize(c, request)
 	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
@@ -51,13 +44,13 @@ func (controller controller) Token(c *fiber.Ctx) error {
 	var request OAuthTokenRequest
 	parseOption := helper.ParseOptions{ParseQuery: true}
 
-	if err := helper.ParseAndValidateRequest[OAuthTokenRequest](c, &request, parseOption); err != nil {
+	err := helper.ParseAndValidateRequest[OAuthTokenRequest](c, &request, parseOption)
+	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(errorResponse)
 	}
 
 	result, err := controller.service.Token(c, request)
 	if err != nil {
-		log.Println(err)
 		return c.Status(fiber.StatusUnauthorized).JSON(errorResponse)
 	}
 
