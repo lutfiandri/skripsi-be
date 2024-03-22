@@ -5,13 +5,14 @@ import (
 
 	"skripsi-be/internal/interface/rest"
 	"skripsi-be/internal/middleware"
+	"skripsi-be/internal/util/helper"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type Service interface {
-	GetProfile(c *fiber.Ctx) (ProfileResponse, error)
-	UpdateProfile(c *fiber.Ctx, request UpdateProfileRequest) (ProfileResponse, error)
+	GetProfile(c *fiber.Ctx) ProfileResponse
+	UpdateProfile(c *fiber.Ctx, request UpdateProfileRequest) ProfileResponse
 }
 
 type service struct {
@@ -24,35 +25,28 @@ func NewService(repository Repository) Service {
 	}
 }
 
-func (service service) GetProfile(c *fiber.Ctx) (ProfileResponse, error) {
+func (service service) GetProfile(c *fiber.Ctx) ProfileResponse {
 	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
 
 	user, err := service.repository.GetUserByEmail(c.Context(), claims.User.Email)
-	if err != nil {
-		return ProfileResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	response := NewResponse(user)
-
-	return response, nil
+	return response
 }
 
-func (service service) UpdateProfile(c *fiber.Ctx, request UpdateProfileRequest) (ProfileResponse, error) {
+func (service service) UpdateProfile(c *fiber.Ctx, request UpdateProfileRequest) ProfileResponse {
 	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
 
 	user, err := service.repository.GetUserByEmail(c.Context(), claims.User.Email)
-	if err != nil {
-		return ProfileResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	user.Name = request.Name
 	user.UpdatedAt = time.Now()
 
-	if err := service.repository.UpdateUser(c.Context(), user); err != nil {
-		return ProfileResponse{}, err
-	}
+	err = service.repository.UpdateUser(c.Context(), user)
+	helper.PanicIfErr(err)
 
 	response := NewResponse(user)
-
-	return response, nil
+	return response
 }

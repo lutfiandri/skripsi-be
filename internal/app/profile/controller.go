@@ -25,11 +25,7 @@ func NewController(app *fiber.App, service Service) Controller {
 }
 
 func (controller *controller) GetProfile(c *fiber.Ctx) error {
-	result, err := controller.service.GetProfile(c)
-	if err != nil {
-		return err
-	}
-
+	result := controller.service.GetProfile(c)
 	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
@@ -38,15 +34,10 @@ func (controller *controller) GetProfile(c *fiber.Ctx) error {
 func (controller *controller) UpdateProfile(c *fiber.Ctx) error {
 	var request UpdateProfileRequest
 	parseOption := helper.ParseOptions{ParseBody: true}
-	if err := helper.ParseAndValidateRequest[UpdateProfileRequest](c, &request, parseOption); err != nil {
-		return err
-	}
+	err := helper.ParseAndValidateRequest[UpdateProfileRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
 
-	result, err := controller.service.UpdateProfile(c, request)
-	if err != nil {
-		return err
-	}
-
+	result := controller.service.UpdateProfile(c, request)
 	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)

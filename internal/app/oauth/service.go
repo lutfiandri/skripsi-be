@@ -17,7 +17,7 @@ import (
 )
 
 type Service interface {
-	Authorize(c *fiber.Ctx, request OAuthAuthorizeRequest) (OAuthAuthorizeResponse, error)
+	Authorize(c *fiber.Ctx, request OAuthAuthorizeRequest) OAuthAuthorizeResponse
 	Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthTokenResponse, error)
 }
 
@@ -31,38 +31,33 @@ func NewService(repository Repository) Service {
 	}
 }
 
-func (service service) Authorize(c *fiber.Ctx, request OAuthAuthorizeRequest) (OAuthAuthorizeResponse, error) {
+func (service service) Authorize(c *fiber.Ctx, request OAuthAuthorizeRequest) OAuthAuthorizeResponse {
 	// check response_type must be code
 	if request.ResponseType != "code" {
-		return OAuthAuthorizeResponse{}, fiber.NewError(fiber.StatusBadRequest, "response_type must be 'code'")
+		panic(ErrResponseType)
 	}
 
 	// check client_id
 	clientId, err := uuid.Parse(request.ClientId)
-	if err != nil {
-		return OAuthAuthorizeResponse{}, ErrClientNotFound
-	}
+	helper.PanicErrIfErr(err, ErrClientNotFound)
 
 	client, err := service.repository.GetOAuthClientById(c.Context(), clientId)
-	if err != nil {
-		return OAuthAuthorizeResponse{}, ErrClientNotFound
-	}
+	helper.PanicErrIfErr(err, ErrClientNotFound)
 
 	// check redirect_uri
 	if !slices.Contains(client.RedirectUris, request.RedirectUri) {
-		return OAuthAuthorizeResponse{}, ErrWrongRedirectUri
+		panic(ErrWrongRedirectUri)
 	}
 
 	// check user exists
 	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
 	userId, err := uuid.Parse(claims.User.Id)
-	if err != nil {
-		return OAuthAuthorizeResponse{}, ErrUserNotFound
-	}
-	if _, err := service.repository.GetUserById(c.Context(), userId); err != nil {
-		return OAuthAuthorizeResponse{}, ErrUserNotFound
-	}
+	helper.PanicErrIfErr(err, ErrUserNotFound)
 
+	_, err = service.repository.GetUserById(c.Context(), userId)
+	helper.PanicErrIfErr(err, ErrUserNotFound)
+
+	// insert auth code
 	authCode := domain.OAuthAuthCode{
 		Id:        uuid.New(),
 		UserId:    userId,
@@ -70,16 +65,14 @@ func (service service) Authorize(c *fiber.Ctx, request OAuthAuthorizeRequest) (O
 		CreatedAt: time.Now(),
 	}
 
-	if err := service.repository.InsertAuthCode(c.Context(), authCode); err != nil {
-		return OAuthAuthorizeResponse{}, err
-	}
+	err = service.repository.InsertAuthCode(c.Context(), authCode)
+	helper.PanicIfErr(err)
 
 	// generate full redirect_uri
-
 	response := OAuthAuthorizeResponse{
 		RedirectUri: service.generateRedirectUris(request.RedirectUri, authCode.AuthCode, request.State),
 	}
-	return response, nil
+	return response
 }
 
 func (service service) Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthTokenResponse, error) {
@@ -164,7 +157,7 @@ func (service service) Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthToke
 		return response, nil
 
 	default:
-		return OAuthTokenResponse{}, fiber.NewError(fiber.StatusUnauthorized, "'grant_type' must be 'authorization_code' or 'refresh_token'")
+		return OAuthTokenResponse{}, ErrGrantType
 	}
 }
 

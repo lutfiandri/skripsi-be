@@ -6,20 +6,21 @@ import (
 	"skripsi-be/internal/domain"
 	"skripsi-be/internal/interface/rest"
 	"skripsi-be/internal/middleware"
+	"skripsi-be/internal/util/helper"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
 type Service interface {
-	GetDevices(c *fiber.Ctx) ([]DeviceResponse, error)
-	GetDevice(c *fiber.Ctx, request GetDeviceRequest) (DeviceResponse, error)
-	CreateDevice(c *fiber.Ctx, request CreateDeviceRequest) (DeviceResponse, error)
-	UpdateDevice(c *fiber.Ctx, request UpdateDeviceRequest) (DeviceResponse, error)
-	UpdateDeviceVersion(c *fiber.Ctx, request UpdateDeviceVersionRequest) (DeviceResponse, error)
-	DeleteDevice(c *fiber.Ctx, request DeleteDeviceRequest) error
+	GetDevices(c *fiber.Ctx) []DeviceResponse
+	GetDevice(c *fiber.Ctx, request GetDeviceRequest) DeviceResponse
+	CreateDevice(c *fiber.Ctx, request CreateDeviceRequest) DeviceResponse
+	UpdateDevice(c *fiber.Ctx, request UpdateDeviceRequest) DeviceResponse
+	UpdateDeviceVersion(c *fiber.Ctx, request UpdateDeviceVersionRequest) DeviceResponse
+	DeleteDevice(c *fiber.Ctx, request DeleteDeviceRequest)
 
-	AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest) (DeviceResponse, error)
+	AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest) DeviceResponse
 }
 
 type service struct {
@@ -32,34 +33,28 @@ func NewService(repository Repository) Service {
 	}
 }
 
-func (service service) GetDevices(c *fiber.Ctx) ([]DeviceResponse, error) {
+func (service service) GetDevices(c *fiber.Ctx) []DeviceResponse {
 	result, err := service.repository.GetDevices(c.Context())
-	if err != nil {
-		return []DeviceResponse{}, err
-	}
+	helper.PanicIfErr(err)
 
 	responses := NewResponses(result)
 
-	return responses, nil
+	return responses
 }
 
-func (service service) GetDevice(c *fiber.Ctx, request GetDeviceRequest) (DeviceResponse, error) {
+func (service service) GetDevice(c *fiber.Ctx, request GetDeviceRequest) DeviceResponse {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return DeviceResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	result, err := service.repository.GetDeviceById(c.Context(), id)
-	if err != nil {
-		return DeviceResponse{}, err
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	response := NewResponse(result)
 
-	return response, nil
+	return response
 }
 
-func (service service) CreateDevice(c *fiber.Ctx, request CreateDeviceRequest) (DeviceResponse, error) {
+func (service service) CreateDevice(c *fiber.Ctx, request CreateDeviceRequest) DeviceResponse {
 	now := time.Now()
 
 	device := domain.Device{
@@ -71,107 +66,84 @@ func (service service) CreateDevice(c *fiber.Ctx, request CreateDeviceRequest) (
 		UpdatedAt:    now,
 	}
 
-	if err := service.repository.CreateDevice(c.Context(), device); err != nil {
-		return DeviceResponse{}, err
-	}
+	err := service.repository.CreateDevice(c.Context(), device)
+	helper.PanicIfErr(err)
 
 	response := NewResponse(device)
 
-	return response, nil
+	return response
 }
 
-func (service service) UpdateDevice(c *fiber.Ctx, request UpdateDeviceRequest) (DeviceResponse, error) {
+func (service service) UpdateDevice(c *fiber.Ctx, request UpdateDeviceRequest) DeviceResponse {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return DeviceResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	device, err := service.repository.GetDeviceById(c.Context(), id)
-	if err != nil {
-		return DeviceResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	device.Name = request.Name
 	device.Room = request.Room
 	device.UpdatedAt = time.Now()
 
-	if err := service.repository.UpdateDevice(c.Context(), device); err != nil {
-		return DeviceResponse{}, err
-	}
+	err = service.repository.UpdateDevice(c.Context(), device)
+	helper.PanicIfErr(err)
 
 	response := NewResponse(device)
 
-	return response, nil
+	return response
 }
 
-func (service service) UpdateDeviceVersion(c *fiber.Ctx, request UpdateDeviceVersionRequest) (DeviceResponse, error) {
+func (service service) UpdateDeviceVersion(c *fiber.Ctx, request UpdateDeviceVersionRequest) DeviceResponse {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return DeviceResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	device, err := service.repository.GetDeviceById(c.Context(), id)
-	if err != nil {
-		return DeviceResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	device.HwVersion = request.HwVersion
 	device.SwVersion = request.SwVersion
 	device.UpdatedAt = time.Now()
 
-	if err := service.repository.UpdateDevice(c.Context(), device); err != nil {
-		return DeviceResponse{}, err
-	}
+	err = service.repository.UpdateDevice(c.Context(), device)
+	helper.PanicIfErr(err)
 
 	response := NewResponse(device)
 
-	return response, nil
+	return response
 }
 
-func (service service) AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest) (DeviceResponse, error) {
+func (service service) AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest) DeviceResponse {
 	// get device
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return DeviceResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	device, err := service.repository.GetDeviceById(c.Context(), id)
-	if err != nil {
-		return DeviceResponse{}, err
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	// get user
 	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
 	userId, err := uuid.Parse(claims.Id)
-	if err != nil {
-		return DeviceResponse{}, err
-	}
+	helper.PanicIfErr(err)
 
 	// update device
 	device.UserId = &userId
 	device.UpdatedAt = time.Now()
 
-	if err := service.repository.UpdateDevice(c.Context(), device); err != nil {
-		return DeviceResponse{}, err
-	}
+	err = service.repository.UpdateDevice(c.Context(), device)
+	helper.PanicIfErr(err)
 
 	response := NewResponse(device)
 
-	return response, nil
+	return response
 }
 
-func (service service) DeleteDevice(c *fiber.Ctx, request DeleteDeviceRequest) error {
+func (service service) DeleteDevice(c *fiber.Ctx, request DeleteDeviceRequest) {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return ErrNotFound
-	}
-	if _, err := service.repository.GetDeviceById(c.Context(), id); err != nil {
-		return err
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
-	if err := service.repository.DeleteDevice(c.Context(), id); err != nil {
-		return err
-	}
+	_, err = service.repository.GetDeviceById(c.Context(), id)
+	helper.PanicErrIfErr(err, ErrNotFound)
 
-	return nil
+	err = service.repository.DeleteDevice(c.Context(), id)
+	helper.PanicIfErr(err)
 }

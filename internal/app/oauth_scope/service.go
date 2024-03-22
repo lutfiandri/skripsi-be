@@ -4,17 +4,18 @@ import (
 	"time"
 
 	"skripsi-be/internal/domain"
+	"skripsi-be/internal/util/helper"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
 type Service interface {
-	CreateOAuthScope(c *fiber.Ctx, request CreateOAuthScopeRequest) (OAuthScopeResponse, error)
-	GetOAuthScopes(c *fiber.Ctx) ([]OAuthScopeResponse, error)
-	GetOAuthScope(c *fiber.Ctx, request GetOAuthScopeRequest) (OAuthScopeResponse, error)
-	UpdateOAuthScope(c *fiber.Ctx, request UpdateOAuthScopeRequest) (OAuthScopeResponse, error)
-	DeleteOAuthScope(c *fiber.Ctx, request DeleteOAuthScopeRequest) error
+	CreateOAuthScope(c *fiber.Ctx, request CreateOAuthScopeRequest) OAuthScopeResponse
+	GetOAuthScopes(c *fiber.Ctx) []OAuthScopeResponse
+	GetOAuthScope(c *fiber.Ctx, request GetOAuthScopeRequest) OAuthScopeResponse
+	UpdateOAuthScope(c *fiber.Ctx, request UpdateOAuthScopeRequest) OAuthScopeResponse
+	DeleteOAuthScope(c *fiber.Ctx, request DeleteOAuthScopeRequest)
 }
 
 type service struct {
@@ -27,7 +28,7 @@ func NewService(repository Repository) Service {
 	}
 }
 
-func (service service) CreateOAuthScope(c *fiber.Ctx, request CreateOAuthScopeRequest) (OAuthScopeResponse, error) {
+func (service service) CreateOAuthScope(c *fiber.Ctx, request CreateOAuthScopeRequest) OAuthScopeResponse {
 	now := time.Now()
 
 	oauthScope := domain.OAuthScope{
@@ -39,51 +40,39 @@ func (service service) CreateOAuthScope(c *fiber.Ctx, request CreateOAuthScopeRe
 	}
 
 	err := service.repository.CreateOAuthScope(c.Context(), oauthScope)
-	if err != nil {
-		return OAuthScopeResponse{}, err
-	}
+	helper.PanicIfErr(err)
 
 	response := NewResponse(oauthScope)
 
-	return response, nil
+	return response
 }
 
-func (service service) GetOAuthScopes(c *fiber.Ctx) ([]OAuthScopeResponse, error) {
+func (service service) GetOAuthScopes(c *fiber.Ctx) []OAuthScopeResponse {
 	oauthScopes, err := service.repository.GetOAuthScopes(c.Context())
-	if err != nil {
-		return []OAuthScopeResponse{}, err
-	}
+	helper.PanicIfErr(err)
 
 	response := NewResponses(oauthScopes)
-	return response, nil
+	return response
 }
 
-func (service service) GetOAuthScope(c *fiber.Ctx, request GetOAuthScopeRequest) (OAuthScopeResponse, error) {
+func (service service) GetOAuthScope(c *fiber.Ctx, request GetOAuthScopeRequest) OAuthScopeResponse {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return OAuthScopeResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	oauthScope, err := service.repository.GetOAuthScopeById(c.Context(), id)
-	if err != nil {
-		return OAuthScopeResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	response := NewResponse(oauthScope)
 
-	return response, nil
+	return response
 }
 
-func (service service) UpdateOAuthScope(c *fiber.Ctx, request UpdateOAuthScopeRequest) (OAuthScopeResponse, error) {
+func (service service) UpdateOAuthScope(c *fiber.Ctx, request UpdateOAuthScopeRequest) OAuthScopeResponse {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return OAuthScopeResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	prev, err := service.repository.GetOAuthScopeById(c.Context(), id)
-	if err != nil {
-		return OAuthScopeResponse{}, ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	oauthScope := domain.OAuthScope{
 		Id:          id,
@@ -94,24 +83,21 @@ func (service service) UpdateOAuthScope(c *fiber.Ctx, request UpdateOAuthScopeRe
 		CreatedAt:   prev.CreatedAt,
 	}
 
-	if err := service.repository.UpdateOAuthScope(c.Context(), oauthScope); err != nil {
-		return OAuthScopeResponse{}, err
-	}
+	err = service.repository.UpdateOAuthScope(c.Context(), oauthScope)
+	helper.PanicIfErr(err)
+
 	response := NewResponse(oauthScope)
 
-	return response, nil
+	return response
 }
 
-func (service service) DeleteOAuthScope(c *fiber.Ctx, request DeleteOAuthScopeRequest) error {
+func (service service) DeleteOAuthScope(c *fiber.Ctx, request DeleteOAuthScopeRequest) {
 	id, err := uuid.Parse(request.Id)
-	if err != nil {
-		return ErrNotFound
-	}
+	helper.PanicErrIfErr(err, ErrNotFound)
 
-	if _, err := service.repository.GetOAuthScopeById(c.Context(), id); err != nil {
-		return ErrNotFound
-	}
+	_, err = service.repository.GetOAuthScopeById(c.Context(), id)
+	helper.PanicErrIfErr(err, ErrNotFound)
 
 	err = service.repository.DeleteOAuthScope(c.Context(), id)
-	return err
+	helper.PanicIfErr(err)
 }

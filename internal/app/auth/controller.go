@@ -27,15 +27,10 @@ func NewController(app *fiber.App, service Service) Controller {
 func (controller controller) Register(c *fiber.Ctx) error {
 	var request RegisterRequest
 	parseOption := helper.ParseOptions{ParseBody: true}
-	if err := helper.ParseAndValidateRequest[RegisterRequest](c, &request, parseOption); err != nil {
-		return err
-	}
+	err := helper.ParseAndValidateRequest[RegisterRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
 
-	result, err := controller.service.Register(c, request)
-	if err != nil {
-		return err
-	}
-
+	result := controller.service.Register(c, request)
 	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
@@ -44,15 +39,10 @@ func (controller controller) Register(c *fiber.Ctx) error {
 func (controller controller) Login(c *fiber.Ctx) error {
 	var request LoginRequest
 	parseOption := helper.ParseOptions{ParseBody: true}
-	if err := helper.ParseAndValidateRequest[LoginRequest](c, &request, parseOption); err != nil {
-		return err
-	}
+	err := helper.ParseAndValidateRequest[LoginRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
 
-	result, err := controller.service.Login(c, request)
-	if err != nil {
-		return err
-	}
-
+	result := controller.service.Login(c, request)
 	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
