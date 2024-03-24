@@ -27,6 +27,14 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
 
+  emqx:
+    image: emqx:latest
+    environment:
+      - 'EMQX_CLUSTER__DNS__INTERVAL=5000'
+    ports:
+      - '1883:1883'
+      - '8083:8083'
+
 volumes:
   skripsi_mongo:
     driver: local
