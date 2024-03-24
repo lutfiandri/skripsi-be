@@ -5,11 +5,15 @@ import (
 )
 
 func NewResponse(device domain.Device) DeviceResponse {
-	userId := device.UserId.String()
+	var userId *string = nil
+	if device.UserId != nil {
+		temp := device.UserId.String()
+		userId = &temp
+	}
 
 	result := DeviceResponse{
 		Id:           device.Id.String(),
-		UserId:       &userId,
+		UserId:       userId,
 		DeviceTypeId: device.DeviceTypeId,
 		Name:         device.Name,
 		Room:         device.Room,
