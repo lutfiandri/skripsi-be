@@ -2,6 +2,7 @@ package device_consumer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -11,6 +12,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
+	"github.com/segmentio/kafka-go"
 )
 
 type Consumer interface {
@@ -19,14 +21,16 @@ type Consumer interface {
 }
 
 type consumer struct {
-	mqttClient mqtt.Client
-	repository Repository
+	repository  Repository
+	mqttClient  mqtt.Client
+	kafkaWriter *kafka.Writer
 }
 
-func NewConsumer(mqttClient mqtt.Client, repository Repository) Consumer {
+func NewConsumer(repository Repository, mqttClient mqtt.Client, kafkaWriter *kafka.Writer) Consumer {
 	return &consumer{
-		mqttClient: mqttClient,
-		repository: repository,
+		repository:  repository,
+		mqttClient:  mqttClient,
+		kafkaWriter: kafkaWriter,
 	}
 }
 
@@ -52,6 +56,7 @@ func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Mes
 	deviceId, err := uuid.Parse(data_dto.DeviceId)
 	helper.LogIfErr(err)
 
+	// insert to db
 	data_domain := domain.DeviceStateLog[any]{
 		Id:        uuid.New(),
 		DeviceId:  deviceId,
@@ -60,5 +65,17 @@ func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Mes
 	}
 
 	err = consumer.repository.InsertDeviceState(context.TODO(), data_domain)
+	helper.LogIfErr(err)
+
+	// insert to kafka
+	data_kafka, err := json.Marshal(data_dto)
+	helper.LogIfErr(err)
+	kafka_topic := "device_state"
+
+	err = consumer.kafkaWriter.WriteMessages(context.TODO(), kafka.Message{
+		Topic: kafka_topic,
+		Key:   []byte(data_domain.Id.String()),
+		Value: data_kafka,
+	})
 	helper.LogIfErr(err)
 }

@@ -9,9 +9,10 @@ import (
 func main() {
 	mqttClient := infrastructure.NewMqttClient(config.MqttBrokerUri, config.MqttUsername, config.MqttPassword)
 	mongo := infrastructure.NewMongoDatabase(config.MongoUri, config.MongoDbName)
+	kafkaWriter := infrastructure.NewKafkaWriter(config.KafkaBrokerUris)
 
 	repository := device_consumer.NewRepository(mongo)
-	consumer := device_consumer.NewConsumer(mqttClient, repository)
+	consumer := device_consumer.NewConsumer(repository, mqttClient, kafkaWriter)
 	consumer.StartConsume()
 
 	select {}
