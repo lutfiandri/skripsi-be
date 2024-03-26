@@ -14,4 +14,6 @@ var (
 	MqttBrokerUri       = os.Getenv("MQTT_BROKER_URI")
 	MqttUsername        = os.Getenv("MQTT_USERNAME")
 	MqttPassword        = os.Getenv("MQTT_PASSWORD")
+	KafkaBrokerUris     = os.Getenv("KAFKA_BROKER_URIS")
+	RedisUri            = os.Getenv("REDIS_URI")
 )

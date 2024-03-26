@@ -35,8 +35,17 @@ services:
       - '1883:1883'
       - '8083:8083'
 
+  redis:
+    image: redis:latest
+    ports:
+      - '6379:6379'
+    volumes:
+      - skripsi_redis:/data
+
 volumes:
   skripsi_mongo:
     driver: local
   skripsi_kafka:
+    driver: local
+  skripsi_redis:
     driver: local
