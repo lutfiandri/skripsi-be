@@ -5,6 +5,7 @@ go 1.22.1
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/go-playground/validator/v10 v10.15.3
+	github.com/go-redis/redis/v7 v7.4.1
 	github.com/gofiber/fiber/v2 v2.52.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.5.0

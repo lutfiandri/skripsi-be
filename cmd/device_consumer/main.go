@@ -10,9 +10,10 @@ func main() {
 	mqttClient := infrastructure.NewMqttClient(config.MqttBrokerUri, config.MqttUsername, config.MqttPassword)
 	mongo := infrastructure.NewMongoDatabase(config.MongoUri, config.MongoDbName)
 	kafkaWriter := infrastructure.NewKafkaWriter(config.KafkaBrokerUris)
+	redisClient := infrastructure.NewRedisClient(config.RedisUri)
 
 	repository := device_consumer.NewRepository(mongo)
-	consumer := device_consumer.NewConsumer(repository, mqttClient, kafkaWriter)
+	consumer := device_consumer.NewConsumer(repository, mqttClient, kafkaWriter, redisClient)
 	consumer.StartConsume()
 
 	select {}
