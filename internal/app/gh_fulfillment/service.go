@@ -37,9 +37,11 @@ func (service service) Sync(c *fiber.Ctx, request Request) SyncResponse {
 
 	ghDevices := []gh_builder.Device{}
 	for _, device := range devices {
+		// FIXME: differentiate device type
 		ghDevice := gh_builder.NewLightBuilder().
-			SetAttributes(device.LastState).
 			SetID(device.Id.String()).
+			SetAttributes(device.LastState).
+			SetRoomHint(device.Room).
 			SetName([]string{device.Name}, device.Name, []string{device.Name}).
 			SetDeviceInfo("lutfi-smarthome", device.DeviceTypeId, device.HwVersion, device.SwVersion).
 			Build()
