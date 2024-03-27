@@ -19,7 +19,7 @@ func main() {
 
 	client := infrastructure.NewMqttClient(config.MqttBrokerUri, config.MqttUsername, config.MqttPassword)
 
-	lightDeviceId := "8cd87119-c57b-4a69-be6f-f837adb080eb"
+	lightDeviceId := "e977c236-48f8-43cd-b987-e0b55b58548c"
 	go loopLight(client, 5*time.Second, lightDeviceId)
 
 	// prevent app from exiting

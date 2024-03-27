@@ -15,11 +15,14 @@ import (
 type Repository interface {
 	InsertDeviceState(ctx context.Context, state domain.DeviceStateLog[any]) error
 	GetDeviceStates(ctx context.Context, from, to *time.Time, device_id *string) ([]domain.DeviceStateLog[any], error)
+
+	UpdateDeviceLastState(ctx context.Context, state domain.DeviceStateLog[any]) error
 }
 
 type repository struct {
-	database   *mongo.Database
-	collection *mongo.Collection
+	database                 *mongo.Database
+	deviceStateLogCollection *mongo.Collection
+	deviceCollection         *mongo.Collection
 }
 
 func NewRepository(database *mongo.Database) Repository {
@@ -35,28 +38,30 @@ func NewRepository(database *mongo.Database) Repository {
 	collectionName := domain.DeviceStateLogCollection
 
 	if err := database.CreateCollection(context.Background(), collectionName, tsOptions); err != nil {
-		log.Printf("WARNING: error on creating %s timeseries collection: %s\n", collectionName, err.Error())
+		log.Printf("WARNING: error on creating %s timeseries deviceStateLogCollection: %s\n", collectionName, err.Error())
 	} else {
-		log.Printf("%s timeseries collection created\n", collectionName)
+		log.Printf("%s timeseries deviceStateLogCollection created\n", collectionName)
 	}
 
-	collection := database.Collection(collectionName)
-	collection.Indexes().CreateMany(context.Background(), []mongo.IndexModel{
+	deviceStateLogCollection := database.Collection(collectionName)
+	deviceStateLogCollection.Indexes().CreateMany(context.Background(), []mongo.IndexModel{
 		{Keys: bson.M{"_id": 1}},
 		{Keys: bson.M{"device_id": 1}},
 		{Keys: bson.M{"created_at": 1}},
 	})
 
 	return &repository{
-		database:   database,
-		collection: collection,
+		database:                 database,
+		deviceStateLogCollection: deviceStateLogCollection,
+		deviceCollection:         database.Collection(domain.DeviceCollection),
 	}
 }
 
 func (repository repository) InsertDeviceState(ctx context.Context, state domain.DeviceStateLog[any]) error {
-	if _, err := repository.collection.InsertOne(ctx, state); err != nil {
+	if _, err := repository.deviceStateLogCollection.InsertOne(ctx, state); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -73,7 +78,7 @@ func (repository repository) GetDeviceStates(ctx context.Context, from, to *time
 		createdAtFilter["$lte"] = to
 	}
 
-	cursor, err := repository.collection.Find(ctx, filter)
+	cursor, err := repository.deviceStateLogCollection.Find(ctx, filter)
 	if err != nil {
 		return deviceStates, err
 	}
@@ -84,4 +89,23 @@ func (repository repository) GetDeviceStates(ctx context.Context, from, to *time
 	}
 
 	return deviceStates, nil
+}
+
+func (repository repository) UpdateDeviceLastState(ctx context.Context, state domain.DeviceStateLog[any]) error {
+	filter := bson.M{"_id": state.DeviceId}
+
+	updateState := state.State.(map[string]any)
+	for key, value := range updateState {
+		delete(updateState, key)
+		updateState["last_state."+key] = value
+	}
+
+	update := bson.M{"$set": updateState}
+
+	_, err := repository.deviceCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
