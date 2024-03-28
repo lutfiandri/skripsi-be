@@ -18,7 +18,7 @@ type Service interface {
 	Sync(c *fiber.Ctx, request Request) SyncResponse
 	Query(c *fiber.Ctx, request Request) QueryResponse
 	Execute(c *fiber.Ctx, request Request) ExecuteResponse
-	Disconnect(c *fiber.Ctx, request Request) Response
+	Disconnect(c *fiber.Ctx, request Request) DisconnectResponse
 }
 
 type service struct {
@@ -151,6 +151,7 @@ func (service service) Execute(c *fiber.Ctx, request Request) ExecuteResponse {
 	return response
 }
 
-func (service service) Disconnect(c *fiber.Ctx, request Request) Response {
-	panic("unimplemented")
+func (service service) Disconnect(c *fiber.Ctx, request Request) DisconnectResponse {
+	response := DisconnectResponse{}
+	return response
 }

@@ -27,8 +27,6 @@ func (controller controller) Fulfillment(c *fiber.Ctx) error {
 	err := helper.ParseAndValidateRequest[Request](c, &request, parseOption)
 	helper.PanicIfErr(err)
 
-	response := Response{}
-
 	switch request.Inputs[0].Intent {
 	case constant.GhActionSync:
 		response := controller.service.Sync(c, request)
@@ -40,12 +38,10 @@ func (controller controller) Fulfillment(c *fiber.Ctx) error {
 		response := controller.service.Execute(c, request)
 		return c.JSON(response)
 	case constant.GhActionDisconnect:
-		response = controller.service.Disconnect(c, request)
+		response := controller.service.Disconnect(c, request)
+		return c.JSON(response)
 
 	default:
-		return c.JSON(Response{})
-
+		return c.JSON(map[string]any{})
 	}
-
-	return c.JSON(response)
 }

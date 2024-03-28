@@ -31,24 +31,6 @@ type Request struct {
 	} `json:"inputs"`
 }
 
-// response
-type CommandResponse struct {
-	Ids       []string       `json:"ids"`
-	Status    string         `json:"status"`
-	States    map[string]any `json:"states"`
-	ErrorCode string         `json:"errorCode"`
-}
-
-type PayloadResponse struct {
-	Commands []CommandResponse `json:"commands"`
-	Devices  map[string]any    `json:"devices"`
-}
-
-type Response struct {
-	RequestId string          `json:"requestId"`
-	Payload   PayloadResponse `json:"payload"`
-}
-
 // SYNC response
 type SyncPayloadResponse struct {
 	AgentUserId string              `json:"agentUserId"`
@@ -86,3 +68,6 @@ type ExecuteResponse struct {
 	RequestId string                 `json:"requestId"`
 	Payload   ExecutePayloadResponse `json:"payload"`
 }
+
+// DISCONNECT response
+type DisconnectResponse struct{}
