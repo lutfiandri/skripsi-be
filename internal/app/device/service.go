@@ -122,7 +122,7 @@ func (service service) AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest)
 
 	// get user
 	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
-	userId, err := uuid.Parse(claims.Id)
+	userId, err := uuid.Parse(claims.User.Id)
 	helper.PanicIfErr(err)
 
 	// update device

@@ -73,6 +73,9 @@ func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Mes
 	err = consumer.repository.InsertDeviceState(context.TODO(), data_domain)
 	helper.LogIfErr(err)
 
+	err = consumer.repository.UpdateDeviceLastState(context.TODO(), data_domain)
+	helper.LogIfErr(err)
+
 	// PIPELINE TO KAFKA
 	// 1. Get from redis
 	// 2. If exists && same state -> don't write to kafka. If not -> write to kafka

@@ -6,6 +6,7 @@ import (
 	"skripsi-be/internal/app/auth"
 	"skripsi-be/internal/app/device"
 	"skripsi-be/internal/app/device_type"
+	"skripsi-be/internal/app/gh_fulfillment"
 	"skripsi-be/internal/app/oauth"
 	"skripsi-be/internal/app/oauth_client"
 	"skripsi-be/internal/app/oauth_scope"
@@ -38,6 +39,8 @@ func main() {
 	oauth_client.Init(app, mongo)
 	oauth_scope.Init(app, mongo)
 	oauth.Init(app, mongo)
+
+	gh_fulfillment.Init(app, mongo)
 
 	app.Listen(":8080")
 }

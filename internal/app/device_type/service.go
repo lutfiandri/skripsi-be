@@ -53,12 +53,12 @@ func (service service) CreateDeviceType(c *fiber.Ctx, request CreateDeviceTypeRe
 	now := time.Now()
 
 	deviceType := domain.DeviceType{
-		Id:               uuid.New(),
-		Name:             request.Name,
-		GoogleDeviceType: request.GoogleDeviceType,
-		Description:      request.Description,
-		CreatedAt:        now,
-		UpdatedAt:        now,
+		Id:          uuid.New(),
+		Name:        request.Name,
+		GoogleHome:  domain.GoogleHome(request.GoogleHome),
+		Description: request.Description,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	err := service.repository.CreateDeviceType(c.Context(), deviceType)
@@ -77,11 +77,11 @@ func (service service) UpdateDeviceType(c *fiber.Ctx, request UpdateDeviceTypeRe
 	helper.PanicErrIfErr(err, ErrNotFound)
 
 	deviceType := domain.DeviceType{
-		Id:               id,
-		Name:             request.Name,
-		GoogleDeviceType: request.GoogleDeviceType,
-		Description:      request.Description,
-		UpdatedAt:        time.Now(),
+		Id:          id,
+		Name:        request.Name,
+		GoogleHome:  domain.GoogleHome(request.GoogleHome),
+		Description: request.Description,
+		UpdatedAt:   time.Now(),
 
 		CreatedAt: prev.CreatedAt,
 	}
