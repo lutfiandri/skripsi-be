@@ -49,6 +49,7 @@ type Response struct {
 	Payload   PayloadResponse `json:"payload"`
 }
 
+// SYNC response
 type SyncPayloadResponse struct {
 	AgentUserId string              `json:"agentUserId"`
 	Devices     []gh_builder.Device `json:"devices"`
@@ -57,4 +58,14 @@ type SyncPayloadResponse struct {
 type SyncResponse struct {
 	RequestId string              `json:"requestId"`
 	Payload   SyncPayloadResponse `json:"payload"`
+}
+
+// QUERY response
+type QueryPayloadResponse struct {
+	Devices map[string]any `json:"devices"`
+}
+
+type QueryResponse struct {
+	RequestId string               `json:"requestId"`
+	Payload   QueryPayloadResponse `json:"payload"`
 }

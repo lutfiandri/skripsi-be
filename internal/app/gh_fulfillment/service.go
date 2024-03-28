@@ -15,7 +15,7 @@ import (
 
 type Service interface {
 	Sync(c *fiber.Ctx, request Request) SyncResponse
-	Query(c *fiber.Ctx, request Request) Response
+	Query(c *fiber.Ctx, request Request) QueryResponse
 	Execute(c *fiber.Ctx, request Request) Response
 	Disconnect(c *fiber.Ctx, request Request) Response
 }
@@ -45,7 +45,7 @@ func (service service) Sync(c *fiber.Ctx, request Request) SyncResponse {
 	userId, err := uuid.Parse(claims.User.Id)
 	helper.PanicIfErr(err)
 
-	devices, err := service.repository.GetDevices(c.Context(), userId)
+	devices, err := service.repository.GetDevices(c.Context(), userId, nil)
 	helper.PanicIfErr(err)
 
 	ghDevices := []gh_builder.Device{}
@@ -75,8 +75,42 @@ func (service service) Sync(c *fiber.Ctx, request Request) SyncResponse {
 	return response
 }
 
-func (service service) Query(c *fiber.Ctx, request Request) Response {
-	panic("unimplemented")
+func (service service) Query(c *fiber.Ctx, request Request) QueryResponse {
+	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
+	userId, err := uuid.Parse(claims.User.Id)
+	helper.PanicIfErr(err)
+
+	deviceIds := []uuid.UUID{}
+	for _, device := range request.Inputs[0].Payload.Devices {
+		id, err := uuid.Parse(device.Id)
+		if err != nil {
+			continue
+		}
+
+		deviceIds = append(deviceIds, id)
+	}
+
+	devices, err := service.repository.GetDevices(c.Context(), userId, &deviceIds)
+	helper.PanicIfErr(err)
+
+	ghDevices := map[string]any{}
+	// "123": {
+	// 	"on": true,
+	// 	"online": true
+	// }
+
+	for _, device := range devices {
+		ghDevices[device.Id.String()] = device.LastState
+	}
+
+	response := QueryResponse{
+		RequestId: request.RequestId,
+		Payload: QueryPayloadResponse{
+			Devices: ghDevices,
+		},
+	}
+
+	return response
 }
 
 func (service service) Execute(c *fiber.Ctx, request Request) Response {

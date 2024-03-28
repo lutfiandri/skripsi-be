@@ -11,7 +11,7 @@ import (
 )
 
 type Repository interface {
-	GetDevices(ctx context.Context, userId uuid.UUID) ([]domain.Device, error)
+	GetDevices(ctx context.Context, userId uuid.UUID, deviceIds *[]uuid.UUID) ([]domain.Device, error)
 	GetDeviceById(ctx context.Context, id uuid.UUID) (domain.Device, error)
 	UpdateDevice(ctx context.Context, device domain.Device) error
 
@@ -32,12 +32,16 @@ func NewRepository(database *mongo.Database) Repository {
 	}
 }
 
-func (repository repository) GetDevices(ctx context.Context, userId uuid.UUID) ([]domain.Device, error) {
+func (repository repository) GetDevices(ctx context.Context, userId uuid.UUID, deviceIds *[]uuid.UUID) ([]domain.Device, error) {
 	var devices []domain.Device
 
 	filter := bson.M{
 		"user_id":    userId,
 		"deleted_at": nil,
+	}
+
+	if deviceIds != nil {
+		filter["_id"] = bson.M{"$in": deviceIds}
 	}
 
 	cursor, err := repository.deviceCollection.Find(ctx, filter)

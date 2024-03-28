@@ -34,7 +34,8 @@ func (controller controller) Fulfillment(c *fiber.Ctx) error {
 		response := controller.service.Sync(c, request)
 		return c.JSON(response)
 	case constant.GhActionQuery:
-		response = controller.service.Query(c, request)
+		response := controller.service.Query(c, request)
+		return c.JSON(response)
 	case constant.GhActionExecute:
 		response = controller.service.Execute(c, request)
 	case constant.GhActionDisconnect:
