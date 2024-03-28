@@ -3,6 +3,7 @@ package gh_fulfillment
 import (
 	"context"
 
+	"skripsi-be/internal/constant"
 	"skripsi-be/internal/domain"
 	"skripsi-be/internal/interface/rest"
 	"skripsi-be/internal/middleware"
@@ -16,7 +17,7 @@ import (
 type Service interface {
 	Sync(c *fiber.Ctx, request Request) SyncResponse
 	Query(c *fiber.Ctx, request Request) QueryResponse
-	Execute(c *fiber.Ctx, request Request) Response
+	Execute(c *fiber.Ctx, request Request) ExecuteResponse
 	Disconnect(c *fiber.Ctx, request Request) Response
 }
 
@@ -113,8 +114,41 @@ func (service service) Query(c *fiber.Ctx, request Request) QueryResponse {
 	return response
 }
 
-func (service service) Execute(c *fiber.Ctx, request Request) Response {
-	panic("unimplemented")
+func (service service) Execute(c *fiber.Ctx, request Request) ExecuteResponse {
+	commandResponses := []ExecuteCommandResponse{}
+	for _, command := range request.Inputs[0].Payload.Commands {
+		// deviceIds := []uuid.UUID{}
+		deviceIdsStr := []string{}
+		for _, device := range command.Devices {
+			// id, err := uuid.Parse(device.Id)
+			// if err != nil {
+			// 	continue
+			// }
+
+			// deviceIds = append(deviceIds, id)
+			deviceIdsStr = append(deviceIdsStr, device.Id)
+		}
+
+		updateParams := command.Execution[0].Params
+		updateParams["online"] = true
+
+		// TODO: publish MQTT -> to notify device
+
+		commandResponses = append(commandResponses, ExecuteCommandResponse{
+			Ids:    deviceIdsStr,
+			Status: constant.GhStatusExecuteSuccess,
+			States: updateParams,
+		})
+
+	}
+
+	response := ExecuteResponse{
+		RequestId: request.RequestId,
+		Payload: ExecutePayloadResponse{
+			Commands: commandResponses,
+		},
+	}
+	return response
 }
 
 func (service service) Disconnect(c *fiber.Ctx, request Request) Response {

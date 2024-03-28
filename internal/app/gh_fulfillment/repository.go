@@ -15,6 +15,8 @@ type Repository interface {
 	GetDeviceById(ctx context.Context, id uuid.UUID) (domain.Device, error)
 	UpdateDevice(ctx context.Context, device domain.Device) error
 
+	UpdateDevicesLastState(ctx context.Context, deviceIds []uuid.UUID, state map[string]any) error
+
 	GetDeviceTypes(ctx context.Context) ([]domain.DeviceType, error)
 }
 
@@ -80,6 +82,29 @@ func (repository repository) UpdateDevice(ctx context.Context, device domain.Dev
 	update := bson.M{"$set": device}
 
 	_, err := repository.deviceCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repository repository) UpdateDevicesLastState(ctx context.Context, deviceIds []uuid.UUID, state map[string]any) error {
+	filter := bson.M{
+		"_id": bson.M{
+			"$in": deviceIds,
+		},
+		"deleted_at": nil,
+	}
+
+	updateState := map[string]any{}
+	for key, value := range updateState {
+		updateState["last_state."+key] = value
+	}
+
+	update := bson.M{"$set": updateState}
+
+	_, err := repository.deviceCollection.UpdateMany(ctx, filter, update)
 	if err != nil {
 		return err
 	}

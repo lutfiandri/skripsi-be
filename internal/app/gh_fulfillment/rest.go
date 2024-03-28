@@ -69,3 +69,20 @@ type QueryResponse struct {
 	RequestId string               `json:"requestId"`
 	Payload   QueryPayloadResponse `json:"payload"`
 }
+
+// EXECUTE response
+type ExecuteCommandResponse struct {
+	Ids       []string       `json:"ids"`
+	Status    string         `json:"status"`
+	States    map[string]any `json:"states"`
+	ErrorCode string         `json:"errorCode"`
+}
+
+type ExecutePayloadResponse struct {
+	Commands []ExecuteCommandResponse `json:"commands"`
+}
+
+type ExecuteResponse struct {
+	RequestId string                 `json:"requestId"`
+	Payload   ExecutePayloadResponse `json:"payload"`
+}
