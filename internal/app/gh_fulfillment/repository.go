@@ -14,17 +14,21 @@ type Repository interface {
 	GetDevices(ctx context.Context, userId uuid.UUID) ([]domain.Device, error)
 	GetDeviceById(ctx context.Context, id uuid.UUID) (domain.Device, error)
 	UpdateDevice(ctx context.Context, device domain.Device) error
+
+	GetDeviceTypes(ctx context.Context) ([]domain.DeviceType, error)
 }
 
 type repository struct {
-	database         *mongo.Database
-	deviceCollection *mongo.Collection
+	database             *mongo.Database
+	deviceCollection     *mongo.Collection
+	deviceTypeCollection *mongo.Collection
 }
 
 func NewRepository(database *mongo.Database) Repository {
 	return &repository{
-		database:         database,
-		deviceCollection: database.Collection(domain.DeviceCollection),
+		database:             database,
+		deviceCollection:     database.Collection(domain.DeviceCollection),
+		deviceTypeCollection: database.Collection(domain.DeviceTypeCollection),
 	}
 }
 
@@ -77,4 +81,27 @@ func (repository repository) UpdateDevice(ctx context.Context, device domain.Dev
 	}
 
 	return nil
+}
+
+func (repository repository) GetDeviceTypes(ctx context.Context) ([]domain.DeviceType, error) {
+	var deviceTypes []domain.DeviceType
+
+	filter := bson.M{"deleted_at": nil}
+
+	cursor, err := repository.deviceTypeCollection.Find(ctx, filter)
+	if err != nil {
+		return deviceTypes, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var deviceType domain.DeviceType
+		if err := cursor.Decode(&deviceType); err != nil {
+			return deviceTypes, err
+		}
+
+		deviceTypes = append(deviceTypes, deviceType)
+	}
+
+	return deviceTypes, nil
 }

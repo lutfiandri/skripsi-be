@@ -1,6 +1,9 @@
 package gh_fulfillment
 
 import (
+	"context"
+
+	"skripsi-be/internal/domain"
 	"skripsi-be/internal/interface/rest"
 	"skripsi-be/internal/middleware"
 	"skripsi-be/internal/util/gh_builder"
@@ -18,12 +21,22 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
+	repository    Repository
+	deviceTypeMap map[string]domain.DeviceType
 }
 
 func NewService(repository Repository) Service {
+	deviceTypes, err := repository.GetDeviceTypes(context.TODO())
+	helper.PanicIfErr(err)
+
+	deviceTypeMap := map[string]domain.DeviceType{}
+	for _, deviceType := range deviceTypes {
+		deviceTypeMap[deviceType.Id.String()] = deviceType
+	}
+
 	return &service{
-		repository: repository,
+		repository:    repository,
+		deviceTypeMap: deviceTypeMap,
 	}
 }
 
@@ -37,13 +50,17 @@ func (service service) Sync(c *fiber.Ctx, request Request) SyncResponse {
 
 	ghDevices := []gh_builder.Device{}
 	for _, device := range devices {
-		// FIXME: differentiate device type
-		ghDevice := gh_builder.NewLightBuilder().
+		deviceType := service.deviceTypeMap[device.DeviceTypeId]
+
+		ghDevice := gh_builder.NewBaseDeviceBuilder().
 			SetID(device.Id.String()).
+			SetType(deviceType.GoogleHome.Type).
+			AddTraits(deviceType.GoogleHome.Traits...).
+			SetWillReportState(deviceType.GoogleHome.WillReportState).
 			SetAttributes(device.LastState).
 			SetRoomHint(device.Room).
 			SetName([]string{device.Name}, device.Name, []string{device.Name}).
-			SetDeviceInfo("lutfi-smarthome", device.DeviceTypeId, device.HwVersion, device.SwVersion).
+			SetDeviceInfo("lutfi-smart-home", device.DeviceTypeId, device.HwVersion, device.SwVersion).
 			Build()
 		ghDevices = append(ghDevices, ghDevice)
 	}
