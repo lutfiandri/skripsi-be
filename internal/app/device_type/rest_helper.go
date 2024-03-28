@@ -6,12 +6,12 @@ import (
 
 func NewResponse(deviceType domain.DeviceType) DeviceTypeResponse {
 	result := DeviceTypeResponse{
-		Id:               deviceType.Id.String(),
-		Name:             deviceType.Name,
-		GoogleDeviceType: deviceType.GoogleDeviceType,
-		Description:      deviceType.Description,
-		CreatedAt:        deviceType.CreatedAt,
-		UpdatedAt:        deviceType.UpdatedAt,
+		Id:          deviceType.Id.String(),
+		Name:        deviceType.Name,
+		GoogleHome:  GoogleHome(deviceType.GoogleHome),
+		Description: deviceType.Description,
+		CreatedAt:   deviceType.CreatedAt,
+		UpdatedAt:   deviceType.UpdatedAt,
 	}
 
 	return result
