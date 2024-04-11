@@ -1,6 +1,8 @@
 package gh_fulfillment
 
 import (
+	"log"
+
 	"skripsi-be/internal/constant"
 	"skripsi-be/internal/util/helper"
 
@@ -26,6 +28,8 @@ func (controller controller) Fulfillment(c *fiber.Ctx) error {
 	parseOption := helper.ParseOptions{ParseBody: true}
 	err := helper.ParseAndValidateRequest[Request](c, &request, parseOption)
 	helper.PanicIfErr(err)
+
+	log.Printf("google fulfillment: %+v\v\v", request)
 
 	switch request.Inputs[0].Intent {
 	case constant.GhActionSync:
