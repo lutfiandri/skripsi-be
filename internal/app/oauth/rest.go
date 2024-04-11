@@ -16,12 +16,12 @@ type OAuthAuthorizeResponse struct {
 }
 
 type OAuthTokenRequest struct {
-	ClientId     string `query:"client_id"`
-	ClientSecret string `query:"client_secret"`
-	GrantType    string `query:"grant_type"` // "authorization_code" || "refresh_token"
-	Code         string `query:"code"`
-	RefreshToken string `query:"refresh_token"`
-	RedirectUri  string `query:"redirect_uri"`
+	ClientId     string `query:"client_id" form:"client_id"`
+	ClientSecret string `query:"client_secret" form:"client_secret"`
+	GrantType    string `query:"grant_type" form:"grant_type"` // "authorization_code" || "refresh_token"
+	Code         string `query:"code" form:"code"`
+	RefreshToken string `query:"refresh_token" form:"refresh_token"`
+	RedirectUri  string `query:"redirect_uri" form:"redirect_uri"`
 }
 
 // /token

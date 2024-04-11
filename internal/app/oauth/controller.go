@@ -42,19 +42,17 @@ func (controller controller) Token(c *fiber.Ctx) error {
 	}
 
 	var request OAuthTokenRequest
-	parseOption := helper.ParseOptions{ParseQuery: true}
+	parseOption := helper.ParseOptions{ParseQuery: true, ParseParams: true, ParseBody: true}
 
 	err := helper.ParseAndValidateRequest[OAuthTokenRequest](c, &request, parseOption)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(errorResponse)
 	}
 
-	result, err := controller.service.Token(c, request)
+	response, err := controller.service.Token(c, request)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(errorResponse)
 	}
-
-	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
 }

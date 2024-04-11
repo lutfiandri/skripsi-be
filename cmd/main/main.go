@@ -16,6 +16,7 @@ import (
 	"skripsi-be/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
@@ -31,6 +32,7 @@ func main() {
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
 	}))
+	app.Use(logger.New())
 
 	auth.Init(app, mongo)
 	device_type.Init(app, mongo)
@@ -42,5 +44,5 @@ func main() {
 
 	gh_fulfillment.Init(app, mongo)
 
-	app.Listen(":8080")
+	app.Listen(":6000")
 }

@@ -2,7 +2,6 @@ package oauth
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"slices"
 	"time"
@@ -102,7 +101,6 @@ func (service service) Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthToke
 
 		authCode, err := service.repository.GetAuthCodeByCode(c.Context(), request.Code)
 		if err != nil {
-			log.Println(request.Code, err)
 			return OAuthTokenResponse{}, err
 		}
 
