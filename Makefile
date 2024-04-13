@@ -6,3 +6,6 @@ run-consumer:
 
 run-dummy-device:
 	go run ./cmd/dummy_device/main.go
+
+run-gh-reporter:
+	go run ./cmd/gh_reporter/main.go

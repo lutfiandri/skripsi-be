@@ -7,6 +7,7 @@ import (
 
 	"skripsi-be/internal/domain"
 
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -17,6 +18,8 @@ type Repository interface {
 	GetDeviceStates(ctx context.Context, from, to *time.Time, device_id *string) ([]domain.DeviceStateLog[any], error)
 
 	UpdateDeviceLastState(ctx context.Context, state domain.DeviceStateLog[any]) error
+
+	GetDeviceById(ctx context.Context, id uuid.UUID) (domain.Device, error)
 }
 
 type repository struct {
@@ -94,9 +97,8 @@ func (repository repository) GetDeviceStates(ctx context.Context, from, to *time
 func (repository repository) UpdateDeviceLastState(ctx context.Context, state domain.DeviceStateLog[any]) error {
 	filter := bson.M{"_id": state.DeviceId}
 
-	updateState := state.State.(map[string]any)
-	for key, value := range updateState {
-		delete(updateState, key)
+	updateState := map[string]any{}
+	for key, value := range state.State.(map[string]any) {
 		updateState["last_state."+key] = value
 	}
 
@@ -108,4 +110,16 @@ func (repository repository) UpdateDeviceLastState(ctx context.Context, state do
 	}
 
 	return nil
+}
+
+func (repository repository) GetDeviceById(ctx context.Context, id uuid.UUID) (domain.Device, error) {
+	var device domain.Device
+
+	filter := bson.M{"_id": id, "deleted_at": nil}
+
+	if err := repository.deviceCollection.FindOne(ctx, filter).Decode(&device); err != nil {
+		return device, err
+	}
+
+	return device, nil
 }

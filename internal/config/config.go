@@ -16,4 +16,7 @@ var (
 	MqttPassword        = os.Getenv("MQTT_PASSWORD")
 	KafkaBrokerUris     = os.Getenv("KAFKA_BROKER_URIS")
 	RedisUri            = os.Getenv("REDIS_URI")
+
+	KafkaTopicDeviceState = "device_state"
+	KafkaGroupGhReporter  = "gh_reporter"
 )

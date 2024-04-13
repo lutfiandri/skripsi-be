@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -33,10 +34,16 @@ func loopLight(client mqtt.Client, interval time.Duration, deviceId string) {
 	for {
 		topic := fmt.Sprintf("device/%s/%s/state", deviceTypeId, deviceId)
 
+		on := false
+		randOn := rand.Intn(2)
+		if randOn == 1 {
+			on = true
+		}
+
 		data := device_state_log_dto.DeviceStateLog[device_state_log_dto.LightState]{
 			DeviceId: deviceId,
 			State: device_state_log_dto.LightState{
-				On: true,
+				On: on,
 			},
 			CreatedAt: time.Now(),
 		}

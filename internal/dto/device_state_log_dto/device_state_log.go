@@ -9,4 +9,5 @@ type DeviceStateLog[T any] struct {
 	DeviceId  string    `json:"device_id"`
 	State     T         `json:"state"`
 	CreatedAt time.Time `json:"created_at"`
+	UserId    string    `json:"user_id"` // used from consumer to kafka
 }

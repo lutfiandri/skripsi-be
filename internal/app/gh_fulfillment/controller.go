@@ -29,7 +29,7 @@ func (controller controller) Fulfillment(c *fiber.Ctx) error {
 	err := helper.ParseAndValidateRequest[Request](c, &request, parseOption)
 	helper.PanicIfErr(err)
 
-	log.Printf("google fulfillment: %+v\v\v", request)
+	log.Printf("\ngoogle fulfillment: %+v\n", request)
 
 	switch request.Inputs[0].Intent {
 	case constant.GhActionSync:

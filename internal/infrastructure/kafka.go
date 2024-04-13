@@ -14,3 +14,13 @@ func NewKafkaWriter(brokerUris string) *kafka.Writer {
 		AllowAutoTopicCreation: true,
 	}
 }
+
+func NewKafkaReader(brokerUris string, groupId, topic string) *kafka.Reader {
+	brokers := strings.Split(brokerUris, ",")
+
+	return kafka.NewReader(kafka.ReaderConfig{
+		Brokers: brokers,
+		GroupID: groupId,
+		Topic:   topic,
+	})
+}
