@@ -30,3 +30,7 @@ tmp
 # Text Editor
 .vscode
 .VSCodeCounter
+
+# Configs
+etc/*
+!.gitkeep

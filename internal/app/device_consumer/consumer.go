@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"reflect"
-	"time"
 
+	"skripsi-be/internal/config"
 	"skripsi-be/internal/domain"
 	"skripsi-be/internal/dto/device_state_log_dto"
 	"skripsi-be/internal/util/helper"
@@ -76,40 +75,48 @@ func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Mes
 	err = consumer.repository.UpdateDeviceLastState(context.TODO(), data_domain)
 	helper.LogIfErr(err)
 
+	// get user id
+	device, err := consumer.repository.GetDeviceById(context.TODO(), deviceId)
+	helper.LogIfErr(err)
+
+	data_dto.UserId = device.UserId.String()
+
+	consumer.PublishToKafka(data_domain.Id.String(), data_dto)
+
 	// PIPELINE TO KAFKA
 	// 1. Get from redis
 	// 2. If exists && same state -> don't write to kafka. If not -> write to kafka
 	// 3. Set to redis with expiration (ex: 1 minutes)
 	// note: redis value is stringify of state
 
-	// 1. Get from redis
-	redis_key := consumer.GetRedisKey(data_dto)
-	value, err := consumer.redisClient.Get(redis_key).Result()
+	// // 1. Get from redis
+	// redis_key := consumer.GetRedisKey(data_dto)
+	// value, err := consumer.redisClient.Get(redis_key).Result()
 
-	// 2. If exists && same state -> don't write to kafka. If not -> write to kafka
-	if err != nil {
-		log.Println(err)
-		consumer.PublishToKafka(data_domain.Id.String(), data_dto)
-	} else {
-		data_redis, err := helper.UnmarshalJson[any]([]byte(value))
-		log.Println(data_redis)
-		if err != nil {
-			log.Println(err)
-			consumer.PublishToKafka(data_domain.Id.String(), data_dto)
-		} else {
-			// check same
-			same := reflect.DeepEqual(data_redis, data_dto.State)
-			if !same {
-				consumer.PublishToKafka(data_domain.Id.String(), data_dto)
-			}
-		}
-	}
+	// // 2. If exists && same state -> don't write to kafka. If not -> write to kafka
+	// if err != nil {
+	// 	log.Println(err)
+	// 	consumer.PublishToKafka(data_domain.Id.String(), data_dto)
+	// } else {
+	// 	data_redis, err := helper.UnmarshalJson[any]([]byte(value))
+	// 	log.Println(data_redis)
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 		consumer.PublishToKafka(data_domain.Id.String(), data_dto)
+	// 	} else {
+	// 		// check same
+	// 		same := reflect.DeepEqual(data_redis, data_dto.State)
+	// 		if !same {
+	// 			consumer.PublishToKafka(data_domain.Id.String(), data_dto)
+	// 		}
+	// 	}
+	// }
 
-	// 3. Set to redis. Expires in 1 minute
-	data_dto_bytes, err := json.Marshal(data_dto.State)
-	helper.LogIfErr(err)
-	err = consumer.redisClient.Set(redis_key, string(data_dto_bytes), time.Minute).Err()
-	helper.LogIfErr(err)
+	// // 3. Set to redis. Expires in 1 minute
+	// data_dto_bytes, err := json.Marshal(data_dto.State)
+	// helper.LogIfErr(err)
+	// err = consumer.redisClient.Set(redis_key, string(data_dto_bytes), time.Minute).Err()
+	// helper.LogIfErr(err)
 }
 
 func (consumer consumer) GetRedisKey(dto device_state_log_dto.DeviceStateLog[any]) string {
@@ -121,7 +128,7 @@ func (consumer consumer) PublishToKafka(key string, data_dto device_state_log_dt
 	// insert to kafka
 	data_kafka, err := json.Marshal(data_dto)
 	helper.LogIfErr(err)
-	kafka_topic := "device_state"
+	kafka_topic := config.KafkaTopicDeviceState
 
 	err = consumer.kafkaWriter.WriteMessages(context.TODO(), kafka.Message{
 		Topic: kafka_topic,
