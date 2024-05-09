@@ -9,8 +9,10 @@ import (
 )
 
 func main() {
-	kafkaReader := infrastructure.NewKafkaReader(config.KafkaBrokerUris, config.KafkaGroupGhReporter, config.KafkaTopicDeviceState)
-	consumer := gh_reporter.NewConsumer(kafkaReader)
+	// kafkaReader := infrastructure.NewKafkaReader(config.KafkaBrokerUris, config.KafkaGroupGhReporter, config.KafkaTopicDeviceState)
+	redisClient := infrastructure.NewRedisClient(config.RedisUri)
+
+	consumer := gh_reporter.NewConsumer(redisClient)
 	consumer.StartConsume()
 	log.Println("google home reporter service")
 

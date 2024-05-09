@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"skripsi-be/internal/config"
+	"skripsi-be/internal/constant"
 	"skripsi-be/internal/domain"
 	"skripsi-be/internal/dto/device_state_log_dto"
 	"skripsi-be/internal/util/helper"
@@ -14,7 +14,6 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/go-redis/redis/v7"
 	"github.com/google/uuid"
-	"github.com/segmentio/kafka-go"
 )
 
 type Consumer interface {
@@ -26,15 +25,13 @@ type Consumer interface {
 type consumer struct {
 	repository  Repository
 	mqttClient  mqtt.Client
-	kafkaWriter *kafka.Writer
 	redisClient *redis.Client
 }
 
-func NewConsumer(repository Repository, mqttClient mqtt.Client, kafkaWriter *kafka.Writer, redisClient *redis.Client) Consumer {
+func NewConsumer(repository Repository, mqttClient mqtt.Client, redisClient *redis.Client) Consumer {
 	return &consumer{
 		repository:  repository,
 		mqttClient:  mqttClient,
-		kafkaWriter: kafkaWriter,
 		redisClient: redisClient,
 	}
 }
@@ -56,7 +53,6 @@ func (consumer consumer) StartConsume() {
 func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Message) {
 	data_dto, err := helper.UnmarshalJson[device_state_log_dto.DeviceStateLog[any]](message.Payload())
 	helper.LogIfErr(err)
-	log.Println(data_dto)
 
 	deviceId, err := uuid.Parse(data_dto.DeviceId)
 	helper.LogIfErr(err)
@@ -81,7 +77,12 @@ func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Mes
 
 	data_dto.UserId = device.UserId.String()
 
-	consumer.PublishToKafka(data_domain.Id.String(), data_dto)
+	data_map := helper.StructToMap(data_dto)
+	log.Println(data_map)
+
+	consumer.PublishToRedisStream(data_dto)
+
+	// consumer.PublishToKafka(data_domain.Id.String(), data_dto)
 
 	// PIPELINE TO KAFKA
 	// 1. Get from redis
@@ -124,16 +125,41 @@ func (consumer consumer) GetRedisKey(dto device_state_log_dto.DeviceStateLog[any
 	return key
 }
 
-func (consumer consumer) PublishToKafka(key string, data_dto device_state_log_dto.DeviceStateLog[any]) {
-	// insert to kafka
-	data_kafka, err := json.Marshal(data_dto)
-	helper.LogIfErr(err)
-	kafka_topic := config.KafkaTopicDeviceState
+// func (consumer consumer) PublishToKafka(key string, data_dto device_state_log_dto.DeviceStateLog[any]) {
+// 	// insert to kafka
+// 	data_kafka, err := json.Marshal(data_dto)
+// 	helper.LogIfErr(err)
+// 	kafka_topic := config.KafkaTopicDeviceState
 
-	err = consumer.kafkaWriter.WriteMessages(context.TODO(), kafka.Message{
-		Topic: kafka_topic,
-		Key:   []byte(key),
-		Value: data_kafka,
-	})
+// 	err = consumer.kafkaWriter.WriteMessages(context.TODO(), kafka.Message{
+// 		Topic: kafka_topic,
+// 		Key:   []byte(key),
+// 		Value: data_kafka,
+// 	})
+// 	helper.LogIfErr(err)
+// }
+
+func (consumer *consumer) PublishToRedisStream(data_dto device_state_log_dto.DeviceStateLog[any]) {
+	stream := constant.RedisDeviceStateStream
+
+	jsonData, err := json.Marshal(data_dto)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	// redis map can only 1 depth
+	var message map[string]any = map[string]any{
+		constant.RedisStreamKey: jsonData,
+	}
+
+	err = consumer.redisClient.XAdd(&redis.XAddArgs{
+		// ID:     uuid.NewString(),
+		Stream: stream,
+		Values: message,
+	}).Err()
+
 	helper.LogIfErr(err)
+
+	log.Println("sent", message)
 }
