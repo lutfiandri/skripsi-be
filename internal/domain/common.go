@@ -8,4 +8,6 @@ const (
 	OAuthClientCollection    = "oauth_clients"
 	OAuthAuthCodeCollection  = "oauth_auth_codes"
 	OAuthScopeCollection     = "oauth_scopes"
+	RoleCollection           = "roles"
+	PermissionCollection     = "permissions"
 )
