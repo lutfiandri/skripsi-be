@@ -10,6 +10,7 @@ import (
 	"skripsi-be/internal/app/oauth"
 	"skripsi-be/internal/app/oauth_client"
 	"skripsi-be/internal/app/oauth_scope"
+	"skripsi-be/internal/app/permission"
 	"skripsi-be/internal/app/profile"
 	"skripsi-be/internal/app/role"
 	"skripsi-be/internal/config"
@@ -43,6 +44,7 @@ func main() {
 	oauth_scope.Init(app, mongo)
 	oauth.Init(app, mongo)
 	role.Init(app, mongo)
+	permission.Init(app, mongo)
 
 	gh_fulfillment.Init(app, mongo)
 
