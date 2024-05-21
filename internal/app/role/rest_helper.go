@@ -4,16 +4,16 @@ import "skripsi-be/internal/domain"
 
 func NewResponse(role domain.Role) RoleResponse {
 	permissions := []string{}
-	for _, p := range role.Permissions {
+	for _, p := range role.PermissionIds {
 		permissions = append(permissions, p.String())
 	}
 
 	result := RoleResponse{
-		Id:          role.Id.String(),
-		Name:        role.Name,
-		Permissions: permissions,
-		CreatedAt:   role.CreatedAt,
-		UpdatedAt:   role.UpdatedAt,
+		Id:            role.Id.String(),
+		Name:          role.Name,
+		PermissionIds: permissions,
+		CreatedAt:     role.CreatedAt,
+		UpdatedAt:     role.UpdatedAt,
 	}
 
 	return result

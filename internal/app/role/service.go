@@ -32,7 +32,7 @@ func (service service) CreateRole(c *fiber.Ctx, request CreateRoleRequest) RoleR
 	now := time.Now()
 
 	permissions := []uuid.UUID{}
-	for _, p := range request.Permissions {
+	for _, p := range request.PermissionIds {
 		permission, err := uuid.Parse(p)
 		helper.PanicErrIfErr(err, ErrPermissionNotFound)
 
@@ -40,11 +40,11 @@ func (service service) CreateRole(c *fiber.Ctx, request CreateRoleRequest) RoleR
 	}
 
 	role := domain.Role{
-		Id:          uuid.New(),
-		Name:        request.Name,
-		Permissions: permissions,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		Id:            uuid.New(),
+		Name:          request.Name,
+		PermissionIds: permissions,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 
 	err := service.repository.CreateRole(c.Context(), role)
@@ -82,7 +82,7 @@ func (service service) UpdateRole(c *fiber.Ctx, request UpdateRoleRequest) RoleR
 
 	// parse permissions
 	permissions := []uuid.UUID{}
-	for _, p := range request.Permissions {
+	for _, p := range request.PermissionIds {
 		permission, err := uuid.Parse(p)
 		helper.PanicErrIfErr(err, ErrPermissionNotFound)
 
@@ -94,7 +94,7 @@ func (service service) UpdateRole(c *fiber.Ctx, request UpdateRoleRequest) RoleR
 
 	// fields to update
 	role.Name = request.Name
-	role.Permissions = permissions
+	role.PermissionIds = permissions
 	role.UpdatedAt = time.Now()
 
 	err = service.repository.UpdateRole(c.Context(), role)

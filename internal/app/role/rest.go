@@ -3,11 +3,11 @@ package role
 import "time"
 
 type RoleResponse struct {
-	Id          string    `json:"id"`
-	Name        string    `json:"name"`
-	Permissions []string  `json:"permissions"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Id            string    `json:"id"`
+	Name          string    `json:"name"`
+	PermissionIds []string  `json:"permission_ids"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 type GetRoleRequest struct {
@@ -15,14 +15,14 @@ type GetRoleRequest struct {
 }
 
 type CreateRoleRequest struct {
-	Name        string   `json:"name" validate:"required"`
-	Permissions []string `json:"permissions"`
+	Name          string   `json:"name" validate:"required"`
+	PermissionIds []string `json:"permission_ids"`
 }
 
 type UpdateRoleRequest struct {
-	Id          string   `params:"id"`
-	Name        string   `json:"name" validate:"required"`
-	Permissions []string `json:"permissions"`
+	Id            string   `params:"id"`
+	Name          string   `json:"name" validate:"required"`
+	PermissionIds []string `json:"permission_ids"`
 }
 
 type DeleteRoleRequest struct {
