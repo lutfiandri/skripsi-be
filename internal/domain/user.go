@@ -8,6 +8,7 @@ import (
 
 type User struct {
 	Id        uuid.UUID `bson:"_id"`
+	RoleId    uuid.UUID `bson:"role_id"`
 	Email     string    `bson:"email"`
 	Password  string    `bson:"password"`
 	Name      string    `bson:"name"`

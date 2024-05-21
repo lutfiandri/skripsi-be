@@ -15,7 +15,7 @@ func PanicErrIfErr(errCondition, err error) {
 }
 
 func PanicErrIfNotErr(errCondition, err error) {
-	if errCondition != nil {
+	if errCondition == nil {
 		panic(err)
 	}
 }

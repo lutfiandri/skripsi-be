@@ -22,6 +22,9 @@ type Repository interface {
 
 	// user
 	GetUserById(ctx context.Context, id uuid.UUID) (domain.User, error)
+
+	// role
+	GetPermissionsByRoleId(ctx context.Context, roleId uuid.UUID) ([]domain.Permission, error)
 }
 
 type repository struct {
@@ -29,6 +32,7 @@ type repository struct {
 	oauthAuthCodeCollection *mongo.Collection
 	oauthClientCollection   *mongo.Collection
 	userCollection          *mongo.Collection
+	roleCollection          *mongo.Collection
 }
 
 func NewRepository(database *mongo.Database) Repository {
@@ -48,6 +52,7 @@ func NewRepository(database *mongo.Database) Repository {
 		oauthAuthCodeCollection: oauthAuthCodeCollection,
 		oauthClientCollection:   database.Collection(domain.OAuthClientCollection),
 		userCollection:          database.Collection(domain.UserCollection),
+		roleCollection:          database.Collection(domain.RoleCollection),
 	}
 }
 
@@ -104,4 +109,35 @@ func (repository repository) GetUserById(ctx context.Context, id uuid.UUID) (dom
 	}
 
 	return user, nil
+}
+
+func (repository repository) GetPermissionsByRoleId(ctx context.Context, roleId uuid.UUID) ([]domain.Permission, error) {
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{
+			"_id": roleId,
+		}}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         domain.PermissionCollection,
+			"localField":   "permission_ids",
+			"foreignField": "_id",
+			"as":           "permissions",
+		}}},
+		{{Key: "$limit", Value: 1}},
+	}
+
+	// Execute the pipeline
+	// note: aggregation always return limit
+	cursor, err := repository.roleCollection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	var roles []domain.Role
+	if err = cursor.All(ctx, &roles); err != nil || len(roles) == 0 {
+		return []domain.Permission{}, err
+	}
+
+	role := roles[0]
+
+	return role.Permissions, nil
 }

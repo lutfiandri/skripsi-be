@@ -1,8 +1,10 @@
 package auth
 
 import (
+	"log"
 	"time"
 
+	"skripsi-be/internal/constant"
 	"skripsi-be/internal/domain"
 	"skripsi-be/internal/util/helper"
 
@@ -35,12 +37,15 @@ func (service service) Register(c *fiber.Ctx, request RegisterRequest) RegisterR
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	helper.PanicIfErr(err)
 
+	roleCustomerId, _ := uuid.Parse(constant.RoleCustomerId)
+
 	now := time.Now()
 	user := domain.User{
 		Id:        uuid.New(),
 		Email:     request.Email,
 		Password:  string(hashedPassword),
 		Name:      request.Name,
+		RoleId:    roleCustomerId,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -48,7 +53,10 @@ func (service service) Register(c *fiber.Ctx, request RegisterRequest) RegisterR
 	err = service.repository.CreateUser(ctx, user)
 	helper.PanicIfErr(err)
 
-	accessToken, err := helper.GenerateJwt(user)
+	permissions, err := service.repository.GetPermissionsByRoleId(ctx, user.RoleId)
+	helper.PanicIfErr(err)
+
+	accessToken, err := helper.GenerateJwt(user, permissions)
 	helper.PanicIfErr(err)
 
 	refreshToken, err := helper.GenerateRefreshJwt(user)
@@ -63,15 +71,24 @@ func (service service) Register(c *fiber.Ctx, request RegisterRequest) RegisterR
 }
 
 func (service service) Login(c *fiber.Ctx, request LoginRequest) LoginResponse {
+	log.Println("login")
 	ctx := c.Context()
 
 	user, err := service.repository.GetUserByEmail(ctx, request.Email)
-	helper.PanicErrIfNotErr(err, ErrInvalidCredentials)
+	// log.Println(err.Error())
+	log.Println()
+	log.Println()
+	log.Println()
+	log.Println()
+	helper.PanicErrIfErr(err, ErrInvalidCredentials)
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
+	permissions, err := service.repository.GetPermissionsByRoleId(ctx, user.RoleId)
 	helper.PanicIfErr(err)
 
-	accessToken, err := helper.GenerateJwt(user)
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
+	helper.PanicErrIfErr(err, ErrInvalidCredentials)
+
+	accessToken, err := helper.GenerateJwt(user, permissions)
 	helper.PanicIfErr(err)
 
 	refreshToken, err := helper.GenerateRefreshJwt(user)
