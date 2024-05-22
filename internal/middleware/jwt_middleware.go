@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"slices"
 	"strings"
 
+	"skripsi-be/internal/interface/rest"
 	"skripsi-be/internal/util/helper"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,6 +31,18 @@ func NewAuthenticator() fiber.Handler {
 		}
 
 		c.Locals(CtxClaims, claims)
+		return c.Next()
+	}
+}
+
+func NewAuthorizer(permission string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		claims := c.Locals(CtxClaims).(rest.JWTClaims)
+
+		if !slices.Contains(claims.Permissions, permission) {
+			return fiber.NewError(fiber.StatusForbidden, "Doesn't have permission to access this resource")
+		}
+
 		return c.Next()
 	}
 }
