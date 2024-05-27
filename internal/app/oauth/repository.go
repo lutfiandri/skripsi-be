@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"skripsi-be/internal/domain"
+	"skripsi-be/internal/util/helper"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
@@ -33,6 +34,7 @@ type repository struct {
 	oauthClientCollection   *mongo.Collection
 	userCollection          *mongo.Collection
 	roleCollection          *mongo.Collection
+	permissionCollection    *mongo.Collection
 }
 
 func NewRepository(database *mongo.Database) Repository {
@@ -53,6 +55,7 @@ func NewRepository(database *mongo.Database) Repository {
 		oauthClientCollection:   database.Collection(domain.OAuthClientCollection),
 		userCollection:          database.Collection(domain.UserCollection),
 		roleCollection:          database.Collection(domain.RoleCollection),
+		permissionCollection:    database.Collection(domain.PermissionCollection),
 	}
 }
 
@@ -112,32 +115,16 @@ func (repository repository) GetUserById(ctx context.Context, id uuid.UUID) (dom
 }
 
 func (repository repository) GetPermissionsByRoleId(ctx context.Context, roleId uuid.UUID) ([]domain.Permission, error) {
-	pipeline := mongo.Pipeline{
-		{{Key: "$match", Value: bson.M{
-			"_id": roleId,
-		}}},
-		{{Key: "$lookup", Value: bson.M{
-			"from":         domain.PermissionCollection,
-			"localField":   "permission_ids",
-			"foreignField": "_id",
-			"as":           "permissions",
-		}}},
-		{{Key: "$limit", Value: 1}},
-	}
+	role := domain.Role{}
+	err := repository.roleCollection.FindOne(ctx, bson.M{"_id": roleId}).Decode(&role)
+	helper.PanicIfErr(err)
 
-	// Execute the pipeline
-	// note: aggregation always return limit
-	cursor, err := repository.roleCollection.Aggregate(ctx, pipeline)
-	if err != nil {
-		return nil, err
-	}
+	permissions := []domain.Permission{}
+	cursor, err := repository.permissionCollection.Find(ctx, bson.M{"_id": bson.M{"$in": role.PermissionIds}})
+	helper.PanicIfErr(err)
 
-	var roles []domain.Role
-	if err = cursor.All(ctx, &roles); err != nil || len(roles) == 0 {
-		return []domain.Permission{}, err
-	}
+	err = cursor.All(ctx, &permissions)
+	helper.PanicIfErr(err)
 
-	role := roles[0]
-
-	return role.Permissions, nil
+	return permissions, nil
 }
