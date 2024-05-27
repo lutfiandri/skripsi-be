@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"log"
 	"time"
 
 	"skripsi-be/internal/constant"
@@ -71,15 +70,9 @@ func (service service) Register(c *fiber.Ctx, request RegisterRequest) RegisterR
 }
 
 func (service service) Login(c *fiber.Ctx, request LoginRequest) LoginResponse {
-	log.Println("login")
 	ctx := c.Context()
 
 	user, err := service.repository.GetUserByEmail(ctx, request.Email)
-	// log.Println(err.Error())
-	log.Println()
-	log.Println()
-	log.Println()
-	log.Println()
 	helper.PanicErrIfErr(err, ErrInvalidCredentials)
 
 	permissions, err := service.repository.GetPermissionsByRoleId(ctx, user.RoleId)
