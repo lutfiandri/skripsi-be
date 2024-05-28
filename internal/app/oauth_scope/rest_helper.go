@@ -6,12 +6,11 @@ import (
 
 func NewResponse(oauthScope domain.OAuthScope) OAuthScopeResponse {
 	result := OAuthScopeResponse{
-		Id:          oauthScope.Id.String(),
-		Section:     oauthScope.Section,
-		Code:        oauthScope.Code,
-		Description: oauthScope.Description,
-		CreatedAt:   oauthScope.CreatedAt,
-		UpdatedAt:   oauthScope.UpdatedAt,
+		Id:            oauthScope.Id.String(),
+		Description:   oauthScope.Description,
+		PermissionIds: oauthScope.PermissionIds.Strings(),
+		CreatedAt:     oauthScope.CreatedAt,
+		UpdatedAt:     oauthScope.UpdatedAt,
 	}
 
 	return result
