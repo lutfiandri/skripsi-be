@@ -12,13 +12,18 @@ import (
 )
 
 type PermissionSeed struct {
-	Permission domain.Permission
-	RoleIds    []uuid.UUID
+	Permission    domain.Permission
+	RoleIds       []uuid.UUID
+	OAuthScopeIds []uuid.UUID
 }
 
 func getMainSeeds() []any {
 	roleAdminId, _ := uuid.Parse(constant.RoleAdminId)
 	roleCustomerId, _ := uuid.Parse(constant.RoleCustomerId)
+
+	scopeReadDeviceId, _ := uuid.Parse(constant.OAuthScopeReadDeviceId)
+	scopeUpdateDeviceId, _ := uuid.Parse(constant.OAuthScopeUpdateDeviceId)
+
 	now := time.Now()
 
 	mainSeeds := []any{
@@ -181,7 +186,8 @@ func getMainSeeds() []any {
 				CreatedAt:   now,
 				UpdatedAt:   now,
 			},
-			RoleIds: []uuid.UUID{roleAdminId, roleCustomerId},
+			RoleIds:       []uuid.UUID{roleAdminId, roleCustomerId},
+			OAuthScopeIds: []uuid.UUID{scopeReadDeviceId},
 		},
 		PermissionSeed{
 			Permission: domain.Permission{
@@ -192,7 +198,8 @@ func getMainSeeds() []any {
 				CreatedAt:   now,
 				UpdatedAt:   now,
 			},
-			RoleIds: []uuid.UUID{roleCustomerId},
+			RoleIds:       []uuid.UUID{roleCustomerId},
+			OAuthScopeIds: []uuid.UUID{scopeUpdateDeviceId},
 		},
 		PermissionSeed{
 			Permission: domain.Permission{
