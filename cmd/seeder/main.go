@@ -11,6 +11,8 @@ func main() {
 
 	// _ = mongo
 
+	// log.Println(uuid.NewString())
+
 	seed.SeedUsers(mongo)
 	seed.SeedRolesAndPermissions(mongo)
 	seed.SeedOAuthScopes(mongo)
