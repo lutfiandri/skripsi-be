@@ -10,7 +10,6 @@ import (
 type Controller interface {
 	Register(c *fiber.Ctx) error
 	Login(c *fiber.Ctx) error
-	UpdatePassword(c *fiber.Ctx) error
 }
 
 type controller struct {
@@ -45,18 +44,6 @@ func (controller controller) Login(c *fiber.Ctx) error {
 
 	result := controller.service.Login(c, request)
 	response := rest.NewSuccessResponse(result)
-
-	return c.JSON(response)
-}
-
-func (controller controller) UpdatePassword(c *fiber.Ctx) error {
-	var request UpdatePasswordRequest
-	parseOption := helper.ParseOptions{ParseBody: true}
-	err := helper.ParseAndValidateRequest[UpdatePasswordRequest](c, &request, parseOption)
-	helper.PanicIfErr(err)
-
-	controller.service.UpdatePassword(c, request)
-	response := rest.NewSuccessResponse(nil)
 
 	return c.JSON(response)
 }

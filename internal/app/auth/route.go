@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"skripsi-be/internal/middleware"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -11,10 +9,4 @@ func Route(app *fiber.App, controller Controller) {
 
 	api.Post("/register", controller.Register)
 	api.Post("/login", controller.Login)
-
-	api.Put(
-		"/password",
-		middleware.NewAuthenticator(),
-		controller.UpdatePassword,
-	)
 }

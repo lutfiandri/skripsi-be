@@ -8,11 +8,14 @@ import (
 	"skripsi-be/internal/util/helper"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Service interface {
 	GetProfile(c *fiber.Ctx) ProfileResponse
 	UpdateProfile(c *fiber.Ctx, request UpdateProfileRequest) ProfileResponse
+	UpdatePassword(c *fiber.Ctx, request UpdatePasswordRequest)
 }
 
 type service struct {
@@ -49,4 +52,23 @@ func (service service) UpdateProfile(c *fiber.Ctx, request UpdateProfileRequest)
 
 	response := NewResponse(user)
 	return response
+}
+
+func (service service) UpdatePassword(c *fiber.Ctx, request UpdatePasswordRequest) {
+	ctx := c.Context()
+
+	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
+	userId := uuid.MustParse(claims.User.Id)
+
+	user, err := service.repository.GetUserByEmail(ctx, claims.User.Email)
+	helper.PanicErrIfErr(err, ErrInvalidCredentials)
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.CurrentPassword))
+	helper.PanicErrIfErr(err, ErrInvalidCredentials)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), bcrypt.DefaultCost)
+	helper.PanicIfErr(err)
+
+	err = service.repository.UpdatePassword(ctx, userId, string(hashedPassword))
+	helper.PanicIfErr(err)
 }
