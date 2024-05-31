@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Repository interface {
@@ -16,21 +17,36 @@ type Repository interface {
 	CreateUser(ctx context.Context, user domain.User) error
 
 	GetPermissionsByRoleId(ctx context.Context, roleId uuid.UUID) ([]domain.Permission, error)
+
+	SetForgotPasswordToken(ctx context.Context, email string, token string) error
 }
 
 type repository struct {
-	database             *mongo.Database
-	userCollection       *mongo.Collection
-	roleCollection       *mongo.Collection
-	permissionCollection *mongo.Collection
+	database                      *mongo.Database
+	userCollection                *mongo.Collection
+	roleCollection                *mongo.Collection
+	permissionCollection          *mongo.Collection
+	forgotPasswordTokenCollection *mongo.Collection
 }
 
 func NewRepository(database *mongo.Database) Repository {
+	forgotPasswordTokenCollection := database.Collection(domain.ForgotPasswordTokenCollection)
+	forgotPasswordTokenCollection.Indexes().CreateMany(context.Background(), []mongo.IndexModel{
+		{
+			Keys: bson.M{"token": 1},
+		},
+		{
+			Keys:    bson.M{"created_at": 1},
+			Options: options.Index().SetExpireAfterSeconds(5 * 60),
+		},
+	})
+
 	return &repository{
-		database:             database,
-		userCollection:       database.Collection(domain.UserCollection),
-		roleCollection:       database.Collection(domain.RoleCollection),
-		permissionCollection: database.Collection(domain.PermissionCollection),
+		database:                      database,
+		userCollection:                database.Collection(domain.UserCollection),
+		roleCollection:                database.Collection(domain.RoleCollection),
+		permissionCollection:          database.Collection(domain.PermissionCollection),
+		forgotPasswordTokenCollection: forgotPasswordTokenCollection,
 	}
 }
 
@@ -68,4 +84,14 @@ func (repository repository) GetPermissionsByRoleId(ctx context.Context, roleId 
 	helper.PanicIfErr(err)
 
 	return permissions, nil
+}
+
+func (repository repository) SetForgotPasswordToken(ctx context.Context, email string, token string) error {
+	filter := bson.M{"email": email}
+	update := bson.M{"$set": bson.M{"email": email, "token": token}}
+
+	opts := options.Update().SetUpsert(true)
+
+	_, err := repository.forgotPasswordTokenCollection.UpdateOne(ctx, filter, update, opts)
+	return err
 }

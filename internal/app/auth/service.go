@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
 	"skripsi-be/internal/constant"
@@ -15,6 +16,7 @@ import (
 type Service interface {
 	Register(c *fiber.Ctx, request RegisterRequest) RegisterResponse
 	Login(c *fiber.Ctx, request LoginRequest) LoginResponse
+	ForgotPassword(c *fiber.Ctx, request ForgotPasswordRequest)
 }
 
 type service struct {
@@ -93,4 +95,20 @@ func (service service) Login(c *fiber.Ctx, request LoginRequest) LoginResponse {
 	}
 
 	return response
+}
+
+func (service service) ForgotPassword(c *fiber.Ctx, request ForgotPasswordRequest) {
+	ctx := c.Context()
+
+	token := uuid.NewString()
+	err := service.repository.SetForgotPasswordToken(ctx, request.Email, token)
+	helper.PanicIfErr(err)
+
+	emailTo := []string{request.Email}
+	emailCc := []string{}
+	emailSubject := "Lutfi's Smarthome Forgot Password"
+	emailMessage := fmt.Sprintf("Here is your token: %s\n", token)
+
+	err = helper.SendMail(emailTo, emailCc, emailSubject, emailMessage)
+	helper.PanicIfErr(err)
 }
