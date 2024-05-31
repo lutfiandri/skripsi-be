@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"time"
 
 	"skripsi-be/internal/domain"
 	"skripsi-be/internal/util/helper"
@@ -88,7 +89,7 @@ func (repository repository) GetPermissionsByRoleId(ctx context.Context, roleId 
 
 func (repository repository) SetForgotPasswordToken(ctx context.Context, email string, token string) error {
 	filter := bson.M{"email": email}
-	update := bson.M{"$set": bson.M{"email": email, "token": token}}
+	update := bson.M{"$set": bson.M{"email": email, "token": token, "created_at": time.Now()}}
 
 	opts := options.Update().SetUpsert(true)
 
