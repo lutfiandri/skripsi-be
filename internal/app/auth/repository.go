@@ -14,6 +14,7 @@ import (
 type Repository interface {
 	GetUserByEmail(ctx context.Context, email string) (domain.User, error)
 	CreateUser(ctx context.Context, user domain.User) error
+	UpdatePassword(ctx context.Context, userId uuid.UUID, password string) error
 
 	GetPermissionsByRoleId(ctx context.Context, roleId uuid.UUID) ([]domain.Permission, error)
 }
@@ -68,4 +69,13 @@ func (repository repository) GetPermissionsByRoleId(ctx context.Context, roleId 
 	helper.PanicIfErr(err)
 
 	return permissions, nil
+}
+
+func (repository repository) UpdatePassword(ctx context.Context, userId uuid.UUID, password string) error {
+	filter := bson.M{"_id": userId}
+	update := bson.M{"$set": bson.M{"password": password}}
+
+	err := repository.userCollection.FindOneAndUpdate(ctx, filter, update).Err()
+
+	return err
 }

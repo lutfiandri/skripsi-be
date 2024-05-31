@@ -5,6 +5,8 @@ import (
 
 	"skripsi-be/internal/constant"
 	"skripsi-be/internal/domain"
+	"skripsi-be/internal/interface/rest"
+	"skripsi-be/internal/middleware"
 	"skripsi-be/internal/util/helper"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,6 +17,7 @@ import (
 type Service interface {
 	Register(c *fiber.Ctx, request RegisterRequest) RegisterResponse
 	Login(c *fiber.Ctx, request LoginRequest) LoginResponse
+	UpdatePassword(c *fiber.Ctx, request UpdatePasswordRequest)
 }
 
 type service struct {
@@ -93,4 +96,23 @@ func (service service) Login(c *fiber.Ctx, request LoginRequest) LoginResponse {
 	}
 
 	return response
+}
+
+func (service service) UpdatePassword(c *fiber.Ctx, request UpdatePasswordRequest) {
+	ctx := c.Context()
+
+	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
+	userId := uuid.MustParse(claims.User.Id)
+
+	user, err := service.repository.GetUserByEmail(ctx, claims.User.Email)
+	helper.PanicErrIfErr(err, ErrInvalidCredentials)
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.CurrentPassword))
+	helper.PanicErrIfErr(err, ErrInvalidCredentials)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), bcrypt.DefaultCost)
+	helper.PanicIfErr(err)
+
+	err = service.repository.UpdatePassword(ctx, userId, string(hashedPassword))
+	helper.PanicIfErr(err)
 }
