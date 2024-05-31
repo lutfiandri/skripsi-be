@@ -10,6 +10,7 @@ func NewResponse(oauthClient domain.OAuthClient) OAuthClientResponse {
 		Secret:       oauthClient.Secret,
 		Name:         oauthClient.Name,
 		RedirectUris: oauthClient.RedirectUris,
+		ScopeIds:     oauthClient.ScopeIds.Strings(),
 		CreatedAt:    oauthClient.CreatedAt,
 		UpdatedAt:    oauthClient.UpdatedAt,
 	}
@@ -27,8 +28,9 @@ func NewResponses(oauthClients []domain.OAuthClient) []OAuthClientResponse {
 
 func NewPublicResponse(oauthClient domain.OAuthClient) OAuthClientPublicResponse {
 	result := OAuthClientPublicResponse{
-		Id:   oauthClient.Id.String(),
-		Name: oauthClient.Name,
+		Id:       oauthClient.Id.String(),
+		Name:     oauthClient.Name,
+		ScopeIds: oauthClient.ScopeIds.Strings(),
 	}
 
 	return result

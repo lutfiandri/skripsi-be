@@ -11,16 +11,24 @@ import (
 )
 
 // access token
-func GenerateJwt(user domain.User) (string, error) {
+func GenerateJwt(user domain.User, permissions []domain.Permission) (string, error) {
+	permissionCodes := []string{}
+	for _, p := range permissions {
+		permissionCodes = append(permissionCodes, p.Code)
+	}
+
 	claims := rest.JWTClaims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour).Unix(), // 1 hour (google's requirement)
 		},
+
 		User: rest.JWTUserClaimsData{
 			Id:    user.Id.String(),
 			Email: user.Email,
 			Name:  user.Name,
 		},
+
+		Permissions: permissionCodes,
 	}
 
 	tokens := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

@@ -31,12 +31,17 @@ func NewService(repository Repository) Service {
 func (service service) CreateOAuthScope(c *fiber.Ctx, request CreateOAuthScopeRequest) OAuthScopeResponse {
 	now := time.Now()
 
+	permissionIds := uuid.UUIDs{}
+
+	for _, pId := range request.PermissionIds {
+		permissionIds = append(permissionIds, uuid.MustParse(pId))
+	}
+
 	oauthScope := domain.OAuthScope{
-		Section:     request.Section,
-		Code:        request.Code,
-		Description: request.Description,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		Description:   request.Description,
+		PermissionIds: permissionIds,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 
 	err := service.repository.CreateOAuthScope(c.Context(), oauthScope)
@@ -68,19 +73,22 @@ func (service service) GetOAuthScope(c *fiber.Ctx, request GetOAuthScopeRequest)
 }
 
 func (service service) UpdateOAuthScope(c *fiber.Ctx, request UpdateOAuthScopeRequest) OAuthScopeResponse {
-	id, err := uuid.Parse(request.Id)
-	helper.PanicErrIfErr(err, ErrNotFound)
+	id := uuid.MustParse(request.Id)
 
 	prev, err := service.repository.GetOAuthScopeById(c.Context(), id)
 	helper.PanicErrIfErr(err, ErrNotFound)
 
+	permissionIds := uuid.UUIDs{}
+	for _, pId := range request.PermissionIds {
+		permissionIds = append(permissionIds, uuid.MustParse(pId))
+	}
+
 	oauthScope := domain.OAuthScope{
-		Id:          id,
-		Code:        request.Code,
-		Section:     request.Section,
-		Description: request.Description,
-		UpdatedAt:   time.Now(),
-		CreatedAt:   prev.CreatedAt,
+		Id:            id,
+		Description:   request.Description,
+		PermissionIds: permissionIds,
+		UpdatedAt:     time.Now(),
+		CreatedAt:     prev.CreatedAt,
 	}
 
 	err = service.repository.UpdateOAuthScope(c.Context(), oauthScope)

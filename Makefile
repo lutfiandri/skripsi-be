@@ -9,3 +9,6 @@ run-dummy-device:
 
 run-gh-reporter:
 	go run ./cmd/gh_reporter/main.go
+
+run-seeder:
+	go run ./cmd/seeder/main.go

@@ -109,7 +109,10 @@ func (service service) Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthToke
 			return OAuthTokenResponse{}, err
 		}
 
-		accessToken, err := helper.GenerateJwt(user)
+		permissions, err := service.repository.GetPermissionsByRoleId(c.Context(), user.RoleId)
+		helper.PanicIfErr(err)
+
+		accessToken, err := helper.GenerateJwt(user, permissions)
 		if err != nil {
 			return OAuthTokenResponse{}, err
 		}
@@ -142,7 +145,10 @@ func (service service) Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthToke
 			return OAuthTokenResponse{}, err
 		}
 
-		accessToken, err := helper.GenerateJwt(user)
+		permissions, err := service.repository.GetPermissionsByRoleId(c.Context(), user.RoleId)
+		helper.PanicIfErr(err)
+
+		accessToken, err := helper.GenerateJwt(user, permissions)
 		if err != nil {
 			return OAuthTokenResponse{}, err
 		}

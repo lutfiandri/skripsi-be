@@ -7,10 +7,11 @@ import (
 )
 
 type OAuthClient struct {
-	Id           uuid.UUID `bson:"_id"`
-	Secret       string    `bson:"secret"`
-	Name         string    `bson:"name"`
-	RedirectUris []string  `bson:"redirect_uris"`
-	CreatedAt    time.Time `bson:"created_at"`
-	UpdatedAt    time.Time `bson:"updated_at"`
+	Id           uuid.UUID  `bson:"_id"`
+	Secret       string     `bson:"secret"`
+	Name         string     `bson:"name"`
+	RedirectUris []string   `bson:"redirect_uris"`
+	ScopeIds     uuid.UUIDs `bson:"scope_ids"`
+	CreatedAt    time.Time  `bson:"created_at"`
+	UpdatedAt    time.Time  `bson:"updated_at"`
 }
