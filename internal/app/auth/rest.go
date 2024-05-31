@@ -23,3 +23,13 @@ type LoginResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+type ResetPasswordRequest struct {
+	Email       string `json:"email"`
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}

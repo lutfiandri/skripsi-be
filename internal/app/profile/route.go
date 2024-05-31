@@ -11,4 +11,10 @@ func Route(app *fiber.App, controller Controller) {
 
 	api.Get("/", middleware.NewAuthenticator(), controller.GetProfile)
 	api.Put("/", middleware.NewAuthenticator(), controller.UpdateProfile)
+
+	api.Put(
+		"/password",
+		middleware.NewAuthenticator(),
+		controller.UpdatePassword,
+	)
 }

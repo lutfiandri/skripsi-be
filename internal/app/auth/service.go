@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
 	"skripsi-be/internal/constant"
@@ -15,6 +16,8 @@ import (
 type Service interface {
 	Register(c *fiber.Ctx, request RegisterRequest) RegisterResponse
 	Login(c *fiber.Ctx, request LoginRequest) LoginResponse
+	ForgotPassword(c *fiber.Ctx, request ForgotPasswordRequest)
+	ResetPassword(c *fiber.Ctx, request ResetPasswordRequest)
 }
 
 type service struct {
@@ -93,4 +96,36 @@ func (service service) Login(c *fiber.Ctx, request LoginRequest) LoginResponse {
 	}
 
 	return response
+}
+
+func (service service) ForgotPassword(c *fiber.Ctx, request ForgotPasswordRequest) {
+	ctx := c.Context()
+
+	token := uuid.NewString()
+	err := service.repository.SetForgotPasswordToken(ctx, request.Email, token)
+	helper.PanicIfErr(err)
+
+	emailTo := []string{request.Email}
+	emailCc := []string{}
+	emailSubject := "Lutfi's Smarthome Forgot Password"
+	emailMessage := fmt.Sprintf("Here is your token: %s\n", token)
+
+	err = helper.SendMail(emailTo, emailCc, emailSubject, emailMessage)
+	helper.PanicIfErr(err)
+}
+
+func (service service) ResetPassword(c *fiber.Ctx, request ResetPasswordRequest) {
+	ctx := c.Context()
+
+	_, err := service.repository.GetForgotPasswordToken(ctx, request.Email, request.Token)
+	helper.PanicIfErr(err)
+
+	err = service.repository.DeleteForgotPasswordToken(ctx, request.Email, request.Token)
+	helper.PanicIfErr(err)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), bcrypt.DefaultCost)
+	helper.PanicIfErr(err)
+
+	err = service.repository.UpdatePassword(ctx, request.Email, string(hashedPassword))
+	helper.PanicIfErr(err)
 }
