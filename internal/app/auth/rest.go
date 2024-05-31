@@ -27,3 +27,9 @@ type LoginResponse struct {
 type ForgotPasswordRequest struct {
 	Email string `json:"email"`
 }
+
+type ResetPasswordRequest struct {
+	Email       string `json:"email"`
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}

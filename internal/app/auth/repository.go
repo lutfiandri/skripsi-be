@@ -16,10 +16,13 @@ import (
 type Repository interface {
 	GetUserByEmail(ctx context.Context, email string) (domain.User, error)
 	CreateUser(ctx context.Context, user domain.User) error
+	UpdatePassword(ctx context.Context, email, password string) error
 
 	GetPermissionsByRoleId(ctx context.Context, roleId uuid.UUID) ([]domain.Permission, error)
 
-	SetForgotPasswordToken(ctx context.Context, email string, token string) error
+	SetForgotPasswordToken(ctx context.Context, email, token string) error
+	GetForgotPasswordToken(ctx context.Context, email, token string) (domain.ForgotPasswordToken, error)
+	DeleteForgotPasswordToken(ctx context.Context, email, token string) error
 }
 
 type repository struct {
@@ -87,12 +90,37 @@ func (repository repository) GetPermissionsByRoleId(ctx context.Context, roleId 
 	return permissions, nil
 }
 
-func (repository repository) SetForgotPasswordToken(ctx context.Context, email string, token string) error {
+func (repository repository) SetForgotPasswordToken(ctx context.Context, email, token string) error {
 	filter := bson.M{"email": email}
 	update := bson.M{"$set": bson.M{"email": email, "token": token, "created_at": time.Now()}}
 
 	opts := options.Update().SetUpsert(true)
 
 	_, err := repository.forgotPasswordTokenCollection.UpdateOne(ctx, filter, update, opts)
+	return err
+}
+
+func (repository repository) GetForgotPasswordToken(ctx context.Context, email, token string) (domain.ForgotPasswordToken, error) {
+	data := domain.ForgotPasswordToken{}
+
+	filter := bson.M{"email": email, "token": token}
+	err := repository.forgotPasswordTokenCollection.FindOne(ctx, filter).Decode(&data)
+
+	return data, err
+}
+
+func (repository repository) UpdatePassword(ctx context.Context, email, password string) error {
+	filter := bson.M{"email": email}
+	update := bson.M{"$set": bson.M{"password": password}}
+
+	err := repository.userCollection.FindOneAndUpdate(ctx, filter, update).Err()
+
+	return err
+}
+
+func (repository repository) DeleteForgotPasswordToken(ctx context.Context, email, token string) error {
+	filter := bson.M{"email": email, "token": token}
+
+	_, err := repository.forgotPasswordTokenCollection.DeleteOne(ctx, filter)
 	return err
 }

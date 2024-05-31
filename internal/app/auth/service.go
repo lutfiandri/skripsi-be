@@ -17,6 +17,7 @@ type Service interface {
 	Register(c *fiber.Ctx, request RegisterRequest) RegisterResponse
 	Login(c *fiber.Ctx, request LoginRequest) LoginResponse
 	ForgotPassword(c *fiber.Ctx, request ForgotPasswordRequest)
+	ResetPassword(c *fiber.Ctx, request ResetPasswordRequest)
 }
 
 type service struct {
@@ -110,5 +111,21 @@ func (service service) ForgotPassword(c *fiber.Ctx, request ForgotPasswordReques
 	emailMessage := fmt.Sprintf("Here is your token: %s\n", token)
 
 	err = helper.SendMail(emailTo, emailCc, emailSubject, emailMessage)
+	helper.PanicIfErr(err)
+}
+
+func (service service) ResetPassword(c *fiber.Ctx, request ResetPasswordRequest) {
+	ctx := c.Context()
+
+	_, err := service.repository.GetForgotPasswordToken(ctx, request.Email, request.Token)
+	helper.PanicIfErr(err)
+
+	err = service.repository.DeleteForgotPasswordToken(ctx, request.Email, request.Token)
+	helper.PanicIfErr(err)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), bcrypt.DefaultCost)
+	helper.PanicIfErr(err)
+
+	err = service.repository.UpdatePassword(ctx, request.Email, string(hashedPassword))
 	helper.PanicIfErr(err)
 }

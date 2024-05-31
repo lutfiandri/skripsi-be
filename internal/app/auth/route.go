@@ -11,4 +11,5 @@ func Route(app *fiber.App, controller Controller) {
 	api.Post("/login", controller.Login)
 
 	api.Post("/forgot-password", controller.ForgotPassword)
+	api.Post("/reset-password", controller.ResetPassword)
 }
