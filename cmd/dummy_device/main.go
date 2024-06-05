@@ -30,9 +30,8 @@ func main() {
 }
 
 func loopLight(client mqtt.Client, interval time.Duration, deviceId string) {
-	deviceTypeId := "dfb08e53-2a45-4b63-aa2d-e0795929cffe"
 	for {
-		topic := fmt.Sprintf("device/%s/%s/state", deviceTypeId, deviceId)
+		topic := fmt.Sprintf("device/%s/state", deviceId)
 
 		on := false
 		randOn := rand.Intn(2)

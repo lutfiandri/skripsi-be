@@ -37,10 +37,10 @@ func NewConsumer(repository Repository, mqttClient mqtt.Client, redisClient *red
 }
 
 func (consumer consumer) StartConsume() {
-	// topic: /device/{device_type_id}/{device_id}/state
+	// topic: /device/{device_id}/state
 
 	go func() {
-		topic := "device/+/+/state"
+		topic := "device/+/state"
 		token := consumer.mqttClient.Subscribe(topic, 1, consumer.HandleIncomingData)
 		if token.Wait() && token.Error() != nil {
 			log.Println(fmt.Sprintf("error on subscribing %s:", topic), token.Error())

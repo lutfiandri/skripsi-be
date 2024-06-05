@@ -26,6 +26,7 @@ func main() {
 	log.Println("main service")
 
 	mongo := infrastructure.NewMongoDatabase(config.MongoUri, config.MongoDbName)
+	mqttClient := infrastructure.NewMqttClient(config.MqttBrokerUri, config.MqttUsername, config.MqttPassword)
 
 	appConfig := fiber.Config{
 		ErrorHandler: middleware.ErrorHandler,
@@ -46,7 +47,7 @@ func main() {
 	role.Init(app, mongo)
 	permission.Init(app, mongo)
 
-	gh_fulfillment.Init(app, mongo)
+	gh_fulfillment.Init(app, mongo, mqttClient)
 
 	app.Listen(":6000")
 }
