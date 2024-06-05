@@ -66,7 +66,7 @@ func (service service) CreateDevice(c *fiber.Ctx, request CreateDeviceRequest) D
 		Id:           uuid.New(),
 		HwVersion:    request.HwVersion,
 		SwVersion:    request.SwVersion,
-		DeviceTypeId: request.DeviceTypeId,
+		DeviceTypeId: uuid.MustParse(request.DeviceTypeId),
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
@@ -154,6 +154,14 @@ func (service service) DeleteDevice(c *fiber.Ctx, request DeleteDeviceRequest) {
 }
 
 func (service service) CommandDevice(c *fiber.Ctx, request CommandDeviceRequest) {
-	_ = uuid.MustParse(request.Id)
+	ctx := c.Context()
+
+	id := uuid.MustParse(request.Id)
+	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
+	userId := uuid.MustParse(claims.User.Id)
+
+	_, err := service.repository.GetDeviceByIdAndUserId(ctx, id, userId)
+	helper.PanicErrIfErr(err, ErrNotFound)
+
 	helper.CommandDeviceWithMqtt(service.mqttClient, request.Id, request.Params)
 }
