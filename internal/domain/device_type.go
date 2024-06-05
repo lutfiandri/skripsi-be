@@ -7,9 +7,10 @@ import (
 )
 
 type GoogleHome struct {
-	Type            string   `bson:"type"`
-	Traits          []string `bson:"traits"`
-	WillReportState bool     `bson:"will_report_state"`
+	Type            string         `bson:"type"`
+	Traits          []string       `bson:"traits"`
+	WillReportState bool           `bson:"will_report_state"`
+	Attributes      map[string]any `bson:"attributes"`
 }
 
 type DeviceType struct {

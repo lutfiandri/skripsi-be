@@ -3,9 +3,10 @@ package device_type
 import "time"
 
 type GoogleHome struct {
-	Type            string   `json:"type" validate:"required"`
-	Traits          []string `json:"traits" validate:"required"`
-	WillReportState bool     `json:"will_report_state" validate:"required"`
+	Type            string         `json:"type" validate:"required"`
+	Traits          []string       `json:"traits" validate:"required"`
+	WillReportState bool           `json:"will_report_state" validate:"required"`
+	Attributes      map[string]any `json:"attributes"`
 }
 
 type DeviceTypeResponse struct {

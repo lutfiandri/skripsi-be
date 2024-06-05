@@ -2,6 +2,9 @@ package gh_fulfillment
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"log"
 
 	"skripsi-be/internal/constant"
 	"skripsi-be/internal/domain"
@@ -10,6 +13,7 @@ import (
 	"skripsi-be/internal/util/gh_builder"
 	"skripsi-be/internal/util/helper"
 
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -23,10 +27,11 @@ type Service interface {
 
 type service struct {
 	repository    Repository
+	mqttClient    mqtt.Client
 	deviceTypeMap map[string]domain.DeviceType
 }
 
-func NewService(repository Repository) Service {
+func NewService(repository Repository, mqttClient mqtt.Client) Service {
 	deviceTypes, err := repository.GetDeviceTypes(context.TODO())
 	helper.PanicIfErr(err)
 
@@ -37,6 +42,7 @@ func NewService(repository Repository) Service {
 
 	return &service{
 		repository:    repository,
+		mqttClient:    mqttClient,
 		deviceTypeMap: deviceTypeMap,
 	}
 }
@@ -58,7 +64,7 @@ func (service service) Sync(c *fiber.Ctx, request Request) SyncResponse {
 			SetType(deviceType.GoogleHome.Type).
 			AddTraits(deviceType.GoogleHome.Traits...).
 			SetWillReportState(deviceType.GoogleHome.WillReportState).
-			SetAttributes(device.LastState).
+			SetAttributes(deviceType.GoogleHome.Attributes).
 			SetRoomHint(device.Room).
 			SetName([]string{device.Name}, device.Name, []string{device.Name}).
 			SetDeviceInfo("lutfi-smart-home", device.DeviceTypeId, device.HwVersion, device.SwVersion).
@@ -73,6 +79,8 @@ func (service service) Sync(c *fiber.Ctx, request Request) SyncResponse {
 			Devices:     ghDevices,
 		},
 	}
+
+	log.Println(response)
 	return response
 }
 
@@ -101,6 +109,7 @@ func (service service) Query(c *fiber.Ctx, request Request) QueryResponse {
 	// }
 
 	for _, device := range devices {
+		device.LastState["status"] = "SUCCESS"
 		ghDevices[device.Id.String()] = device.LastState
 	}
 
@@ -117,22 +126,26 @@ func (service service) Query(c *fiber.Ctx, request Request) QueryResponse {
 func (service service) Execute(c *fiber.Ctx, request Request) ExecuteResponse {
 	commandResponses := []ExecuteCommandResponse{}
 	for _, command := range request.Inputs[0].Payload.Commands {
-		// deviceIds := []uuid.UUID{}
+		updateParams := command.Execution[0].Params
+
 		deviceIdsStr := []string{}
 		for _, device := range command.Devices {
-			// id, err := uuid.Parse(device.Id)
-			// if err != nil {
-			// 	continue
-			// }
-
-			// deviceIds = append(deviceIds, id)
 			deviceIdsStr = append(deviceIdsStr, device.Id)
+
+			// TODO: publish MQTT -> to notify device
+			topic := fmt.Sprintf("device/%s/command", device.Id)
+
+			paramsJson, err := json.Marshal(updateParams)
+			helper.LogIfErr(err)
+
+			token := service.mqttClient.Publish(topic, 1, false, paramsJson)
+			token.Wait()
+			if token.Error() != nil {
+				log.Println(token.Error())
+			}
 		}
 
-		updateParams := command.Execution[0].Params
 		updateParams["online"] = true
-
-		// TODO: publish MQTT -> to notify device
 
 		commandResponses = append(commandResponses, ExecuteCommandResponse{
 			Ids:    deviceIdsStr,
