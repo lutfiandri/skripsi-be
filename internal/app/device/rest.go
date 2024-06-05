@@ -48,3 +48,9 @@ type DeleteDeviceRequest struct {
 type AcquireDeviceRequest struct {
 	Id string `params:"id"`
 }
+
+// control device
+type CommandDeviceRequest struct {
+	Id     string         `params:"id"`
+	Params map[string]any `json:"params"`
+}
