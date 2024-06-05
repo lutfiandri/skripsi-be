@@ -14,7 +14,7 @@ func NewResponse(device domain.Device) DeviceResponse {
 	result := DeviceResponse{
 		Id:           device.Id.String(),
 		UserId:       userId,
-		DeviceTypeId: device.DeviceTypeId,
+		DeviceTypeId: device.DeviceTypeId.String(),
 		Name:         device.Name,
 		Room:         device.Room,
 		HwVersion:    device.HwVersion,

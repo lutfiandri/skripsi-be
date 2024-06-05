@@ -9,7 +9,7 @@ import (
 type Device struct {
 	Id           uuid.UUID      `bson:"_id"`
 	UserId       *uuid.UUID     `bson:"user_id"`
-	DeviceTypeId string         `bson:"device_type_id"`
+	DeviceTypeId uuid.UUID      `bson:"device_type_id"`
 	LastState    map[string]any `bson:"last_state"`
 	Name         string         `bson:"name"`
 	Room         string         `bson:"room"`

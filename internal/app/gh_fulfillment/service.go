@@ -55,7 +55,7 @@ func (service service) Sync(c *fiber.Ctx, request Request) SyncResponse {
 
 	ghDevices := []gh_builder.Device{}
 	for _, device := range devices {
-		deviceType := service.deviceTypeMap[device.DeviceTypeId]
+		deviceType := service.deviceTypeMap[device.DeviceTypeId.String()]
 
 		ghDevice := gh_builder.NewBaseDeviceBuilder().
 			SetID(device.Id.String()).
@@ -65,7 +65,7 @@ func (service service) Sync(c *fiber.Ctx, request Request) SyncResponse {
 			SetAttributes(deviceType.GoogleHome.Attributes).
 			SetRoomHint(device.Room).
 			SetName([]string{device.Name}, device.Name, []string{device.Name}).
-			SetDeviceInfo("lutfi-smart-home", device.DeviceTypeId, device.HwVersion, device.SwVersion).
+			SetDeviceInfo("lutfi-smart-home", device.DeviceTypeId.String(), device.HwVersion, device.SwVersion).
 			Build()
 		ghDevices = append(ghDevices, ghDevice)
 	}
