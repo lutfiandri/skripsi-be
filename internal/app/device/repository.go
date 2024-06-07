@@ -17,6 +17,9 @@ type Repository interface {
 	CreateDevice(ctx context.Context, device domain.Device) error
 	UpdateDevice(ctx context.Context, device domain.Device) error
 	DeleteDevice(ctx context.Context, id uuid.UUID) error
+
+	GetDevicesByUserId(ctx context.Context, userId uuid.UUID) ([]domain.Device, error)
+	GetDeviceByIdAndUserId(ctx context.Context, id, userId uuid.UUID) (domain.Device, error)
 }
 
 type repository struct {
@@ -100,4 +103,39 @@ func (repository repository) DeleteDevice(ctx context.Context, id uuid.UUID) err
 	}
 
 	return nil
+}
+
+func (repository repository) GetDevicesByUserId(ctx context.Context, userId uuid.UUID) ([]domain.Device, error) {
+	var devices []domain.Device
+
+	filter := bson.M{"user_id": userId, "deleted_at": nil}
+
+	cursor, err := repository.deviceCollection.Find(ctx, filter)
+	if err != nil {
+		return devices, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var device domain.Device
+		if err := cursor.Decode(&device); err != nil {
+			return devices, err
+		}
+
+		devices = append(devices, device)
+	}
+
+	return devices, nil
+}
+
+func (repository repository) GetDeviceByIdAndUserId(ctx context.Context, id, userId uuid.UUID) (domain.Device, error) {
+	var device domain.Device
+
+	filter := bson.M{"_id": id, "user_id": userId, "deleted_at": nil}
+
+	if err := repository.deviceCollection.FindOne(ctx, filter).Decode(&device); err != nil {
+		return device, err
+	}
+
+	return device, nil
 }

@@ -8,6 +8,7 @@ import (
 	"skripsi-be/internal/middleware"
 	"skripsi-be/internal/util/helper"
 
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -21,15 +22,19 @@ type Service interface {
 	DeleteDevice(c *fiber.Ctx, request DeleteDeviceRequest)
 
 	AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest) DeviceResponse
+
+	CommandDevice(c *fiber.Ctx, request CommandDeviceRequest)
 }
 
 type service struct {
 	repository Repository
+	mqttClient mqtt.Client
 }
 
-func NewService(repository Repository) Service {
+func NewService(repository Repository, mqttClient mqtt.Client) Service {
 	return &service{
 		repository: repository,
+		mqttClient: mqttClient,
 	}
 }
 
@@ -61,7 +66,7 @@ func (service service) CreateDevice(c *fiber.Ctx, request CreateDeviceRequest) D
 		Id:           uuid.New(),
 		HwVersion:    request.HwVersion,
 		SwVersion:    request.SwVersion,
-		DeviceTypeId: request.DeviceTypeId,
+		DeviceTypeId: uuid.MustParse(request.DeviceTypeId),
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
@@ -146,4 +151,17 @@ func (service service) DeleteDevice(c *fiber.Ctx, request DeleteDeviceRequest) {
 
 	err = service.repository.DeleteDevice(c.Context(), id)
 	helper.PanicIfErr(err)
+}
+
+func (service service) CommandDevice(c *fiber.Ctx, request CommandDeviceRequest) {
+	ctx := c.Context()
+
+	id := uuid.MustParse(request.Id)
+	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
+	userId := uuid.MustParse(claims.User.Id)
+
+	_, err := service.repository.GetDeviceByIdAndUserId(ctx, id, userId)
+	helper.PanicErrIfErr(err, ErrNotFound)
+
+	helper.CommandDeviceWithMqtt(service.mqttClient, request.Id, request.Params)
 }

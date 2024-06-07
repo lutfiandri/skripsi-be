@@ -39,7 +39,7 @@ func main() {
 
 	auth.Init(app, mongo)
 	device_type.Init(app, mongo)
-	device.Init(app, mongo)
+	device.Init(app, mongo, mqttClient)
 	profile.Init(app, mongo)
 	oauth_client.Init(app, mongo)
 	oauth_scope.Init(app, mongo)

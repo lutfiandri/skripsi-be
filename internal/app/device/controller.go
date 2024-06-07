@@ -16,6 +16,8 @@ type Controller interface {
 	DeleteDevice(c *fiber.Ctx) error
 
 	AcquireDevice(c *fiber.Ctx) error
+
+	CommandDevice(c *fiber.Ctx) error
 }
 
 type controller struct {
@@ -105,6 +107,18 @@ func (controller controller) AcquireDevice(c *fiber.Ctx) error {
 
 	result := controller.service.AcquireDevice(c, request)
 	response := rest.NewSuccessResponse(result)
+
+	return c.JSON(response)
+}
+
+func (controller controller) CommandDevice(c *fiber.Ctx) error {
+	var request CommandDeviceRequest
+	parseOption := helper.ParseOptions{ParseParams: true, ParseBody: true}
+	err := helper.ParseAndValidateRequest[CommandDeviceRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
+
+	controller.service.CommandDevice(c, request)
+	response := rest.NewSuccessResponse(nil)
 
 	return c.JSON(response)
 }

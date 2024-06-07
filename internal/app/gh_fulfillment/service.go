@@ -2,8 +2,6 @@ package gh_fulfillment
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 
 	"skripsi-be/internal/constant"
@@ -57,7 +55,7 @@ func (service service) Sync(c *fiber.Ctx, request Request) SyncResponse {
 
 	ghDevices := []gh_builder.Device{}
 	for _, device := range devices {
-		deviceType := service.deviceTypeMap[device.DeviceTypeId]
+		deviceType := service.deviceTypeMap[device.DeviceTypeId.String()]
 
 		ghDevice := gh_builder.NewBaseDeviceBuilder().
 			SetID(device.Id.String()).
@@ -67,7 +65,7 @@ func (service service) Sync(c *fiber.Ctx, request Request) SyncResponse {
 			SetAttributes(deviceType.GoogleHome.Attributes).
 			SetRoomHint(device.Room).
 			SetName([]string{device.Name}, device.Name, []string{device.Name}).
-			SetDeviceInfo("lutfi-smart-home", device.DeviceTypeId, device.HwVersion, device.SwVersion).
+			SetDeviceInfo("lutfi-smart-home", device.DeviceTypeId.String(), device.HwVersion, device.SwVersion).
 			Build()
 		ghDevices = append(ghDevices, ghDevice)
 	}
@@ -126,31 +124,21 @@ func (service service) Query(c *fiber.Ctx, request Request) QueryResponse {
 func (service service) Execute(c *fiber.Ctx, request Request) ExecuteResponse {
 	commandResponses := []ExecuteCommandResponse{}
 	for _, command := range request.Inputs[0].Payload.Commands {
-		updateParams := command.Execution[0].Params
+		params := command.Execution[0].Params
 
 		deviceIdsStr := []string{}
 		for _, device := range command.Devices {
 			deviceIdsStr = append(deviceIdsStr, device.Id)
 
-			// TODO: publish MQTT -> to notify device
-			topic := fmt.Sprintf("device/%s/command", device.Id)
-
-			paramsJson, err := json.Marshal(updateParams)
-			helper.LogIfErr(err)
-
-			token := service.mqttClient.Publish(topic, 1, false, paramsJson)
-			token.Wait()
-			if token.Error() != nil {
-				log.Println(token.Error())
-			}
+			helper.CommandDeviceWithMqtt(service.mqttClient, device.Id, params)
 		}
 
-		updateParams["online"] = true
+		params["online"] = true
 
 		commandResponses = append(commandResponses, ExecuteCommandResponse{
 			Ids:    deviceIdsStr,
 			Status: constant.GhStatusExecuteSuccess,
-			States: updateParams,
+			States: params,
 		})
 
 	}
