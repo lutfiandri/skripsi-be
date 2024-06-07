@@ -42,7 +42,7 @@ func (controller controller) Token(c *fiber.Ctx) error {
 	}
 
 	var request OAuthTokenRequest
-	parseOption := helper.ParseOptions{ParseQuery: true, ParseParams: true, ParseBody: true}
+	parseOption := helper.ParseOptions{ParseBody: true}
 
 	err := helper.ParseAndValidateRequest[OAuthTokenRequest](c, &request, parseOption)
 	if err != nil {
