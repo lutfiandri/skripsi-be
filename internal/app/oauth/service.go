@@ -86,11 +86,6 @@ func (service service) Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthToke
 		return OAuthTokenResponse{}, ErrInvalidClientCredentials
 	}
 
-	// check redirect_uri
-	if !slices.Contains(client.RedirectUris, request.RedirectUri) {
-		return OAuthTokenResponse{}, ErrWrongRedirectUri
-	}
-
 	// check client_secret
 	if client.Secret != request.ClientSecret {
 		return OAuthTokenResponse{}, ErrInvalidClientCredentials
@@ -98,6 +93,11 @@ func (service service) Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthToke
 
 	switch request.GrantType {
 	case "authorization_code":
+
+		// check redirect_uri
+		if !slices.Contains(client.RedirectUris, request.RedirectUri) {
+			return OAuthTokenResponse{}, ErrWrongRedirectUri
+		}
 
 		authCode, err := service.repository.GetAuthCodeByCode(c.Context(), request.Code)
 		if err != nil {
