@@ -59,6 +59,13 @@ func Route(app *fiber.App, controller Controller) {
 	)
 
 	api.Post(
+		"/:id/unacquire",
+		middleware.NewAuthenticator(),
+		middleware.NewAuthorizer(constant.PermissionAcquireDevice),
+		controller.UnacquireDevice,
+	)
+
+	api.Post(
 		"/:id/command",
 		middleware.NewAuthenticator(),
 		middleware.NewAuthorizer(constant.PermissionUpdateDevice),

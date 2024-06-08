@@ -48,6 +48,9 @@ type DeleteDeviceRequest struct {
 type AcquireDeviceRequest struct {
 	Id string `params:"id"`
 }
+type UnacquireDeviceRequest struct {
+	Id string `params:"id"`
+}
 
 // control device
 type CommandDeviceRequest struct {

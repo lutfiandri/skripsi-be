@@ -23,6 +23,7 @@ type Service interface {
 	DeleteDevice(c *fiber.Ctx, request DeleteDeviceRequest)
 
 	AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest) DeviceResponse
+	UnacquireDevice(c *fiber.Ctx, request UnacquireDeviceRequest) DeviceResponse
 
 	CommandDevice(c *fiber.Ctx, request CommandDeviceRequest)
 }
@@ -67,6 +68,8 @@ func (service service) CreateDevice(c *fiber.Ctx, request CreateDeviceRequest) D
 
 	device := domain.Device{
 		Id:           uuid.New(),
+		Name:         "Lutfi's Smart Lamp",
+		Room:         "office",
 		HwVersion:    request.HwVersion,
 		SwVersion:    request.SwVersion,
 		DeviceTypeId: uuid.MustParse(request.DeviceTypeId),
@@ -139,6 +142,32 @@ func (service service) AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest)
 
 	// update device
 	device.UserId = &userId
+	device.UpdatedAt = time.Now()
+
+	err = service.repository.UpdateDevice(c.Context(), device)
+	helper.PanicIfErr(err)
+
+	err = helper.HomegraphRequestSync(service.homegraphDeviceService, claims.User.Id)
+	helper.PanicIfErr(err)
+
+	response := NewResponse(device)
+
+	return response
+}
+
+func (service service) UnacquireDevice(c *fiber.Ctx, request UnacquireDeviceRequest) DeviceResponse {
+	// get device
+	id, err := uuid.Parse(request.Id)
+	helper.PanicErrIfErr(err, ErrNotFound)
+
+	device, err := service.repository.GetDeviceById(c.Context(), id)
+	helper.PanicErrIfErr(err, ErrNotFound)
+
+	// get user
+	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
+
+	// update device
+	device.UserId = nil
 	device.UpdatedAt = time.Now()
 
 	err = service.repository.UpdateDevice(c.Context(), device)
