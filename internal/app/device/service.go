@@ -11,6 +11,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"google.golang.org/api/homegraph/v1"
 )
 
 type Service interface {
@@ -27,14 +28,16 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
-	mqttClient mqtt.Client
+	repository             Repository
+	mqttClient             mqtt.Client
+	homegraphDeviceService *homegraph.DevicesService
 }
 
-func NewService(repository Repository, mqttClient mqtt.Client) Service {
+func NewService(repository Repository, mqttClient mqtt.Client, homegraphDeviceService *homegraph.DevicesService) Service {
 	return &service{
-		repository: repository,
-		mqttClient: mqttClient,
+		repository:             repository,
+		mqttClient:             mqttClient,
+		homegraphDeviceService: homegraphDeviceService,
 	}
 }
 
@@ -93,6 +96,10 @@ func (service service) UpdateDevice(c *fiber.Ctx, request UpdateDeviceRequest) D
 	err = service.repository.UpdateDevice(c.Context(), device)
 	helper.PanicIfErr(err)
 
+	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
+	err = helper.HomegraphRequestSync(service.homegraphDeviceService, claims.User.Id)
+	helper.PanicIfErr(err)
+
 	response := NewResponse(device)
 
 	return response
@@ -135,6 +142,9 @@ func (service service) AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest)
 	device.UpdatedAt = time.Now()
 
 	err = service.repository.UpdateDevice(c.Context(), device)
+	helper.PanicIfErr(err)
+
+	err = helper.HomegraphRequestSync(service.homegraphDeviceService, claims.User.Id)
 	helper.PanicIfErr(err)
 
 	response := NewResponse(device)
