@@ -16,6 +16,7 @@ type Controller interface {
 	DeleteDevice(c *fiber.Ctx) error
 
 	AcquireDevice(c *fiber.Ctx) error
+	UnacquireDevice(c *fiber.Ctx) error
 
 	CommandDevice(c *fiber.Ctx) error
 }
@@ -106,6 +107,18 @@ func (controller controller) AcquireDevice(c *fiber.Ctx) error {
 	helper.PanicIfErr(err)
 
 	result := controller.service.AcquireDevice(c, request)
+	response := rest.NewSuccessResponse(result)
+
+	return c.JSON(response)
+}
+
+func (controller controller) UnacquireDevice(c *fiber.Ctx) error {
+	var request UnacquireDeviceRequest
+	parseOption := helper.ParseOptions{ParseParams: true}
+	err := helper.ParseAndValidateRequest[UnacquireDeviceRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
+
+	result := controller.service.UnacquireDevice(c, request)
 	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)

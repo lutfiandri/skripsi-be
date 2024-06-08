@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"skripsi-be/internal/app/auth"
@@ -16,10 +17,12 @@ import (
 	"skripsi-be/internal/config"
 	"skripsi-be/internal/infrastructure"
 	"skripsi-be/internal/middleware"
+	"skripsi-be/internal/util/helper"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"google.golang.org/api/homegraph/v1"
 )
 
 func main() {
@@ -27,6 +30,10 @@ func main() {
 
 	mongo := infrastructure.NewMongoDatabase(config.MongoUri, config.MongoDbName)
 	mqttClient := infrastructure.NewMqttClient(config.MqttBrokerUri, config.MqttUsername, config.MqttPassword)
+
+	homegraphService, err := homegraph.NewService(context.Background())
+	helper.PanicIfErr(err)
+	homegraphDeviceService := homegraph.NewDevicesService(homegraphService)
 
 	appConfig := fiber.Config{
 		ErrorHandler: middleware.ErrorHandler,
@@ -39,7 +46,7 @@ func main() {
 
 	auth.Init(app, mongo)
 	device_type.Init(app, mongo)
-	device.Init(app, mongo, mqttClient)
+	device.Init(app, mongo, mqttClient, homegraphDeviceService)
 	profile.Init(app, mongo)
 	oauth_client.Init(app, mongo)
 	oauth_scope.Init(app, mongo)

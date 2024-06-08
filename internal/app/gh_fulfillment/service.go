@@ -110,6 +110,9 @@ func (service service) Query(c *fiber.Ctx, request Request) QueryResponse {
 
 	for _, device := range devices {
 		state := device.LastState
+		if state == nil {
+			state = map[string]any{}
+		}
 		state["status"] = "SUCCESS"
 		ghDevices[device.Id.String()] = state
 	}

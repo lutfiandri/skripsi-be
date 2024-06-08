@@ -11,6 +11,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"google.golang.org/api/homegraph/v1"
 )
 
 type Service interface {
@@ -22,19 +23,22 @@ type Service interface {
 	DeleteDevice(c *fiber.Ctx, request DeleteDeviceRequest)
 
 	AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest) DeviceResponse
+	UnacquireDevice(c *fiber.Ctx, request UnacquireDeviceRequest) DeviceResponse
 
 	CommandDevice(c *fiber.Ctx, request CommandDeviceRequest)
 }
 
 type service struct {
-	repository Repository
-	mqttClient mqtt.Client
+	repository             Repository
+	mqttClient             mqtt.Client
+	homegraphDeviceService *homegraph.DevicesService
 }
 
-func NewService(repository Repository, mqttClient mqtt.Client) Service {
+func NewService(repository Repository, mqttClient mqtt.Client, homegraphDeviceService *homegraph.DevicesService) Service {
 	return &service{
-		repository: repository,
-		mqttClient: mqttClient,
+		repository:             repository,
+		mqttClient:             mqttClient,
+		homegraphDeviceService: homegraphDeviceService,
 	}
 }
 
@@ -64,6 +68,8 @@ func (service service) CreateDevice(c *fiber.Ctx, request CreateDeviceRequest) D
 
 	device := domain.Device{
 		Id:           uuid.New(),
+		Name:         "Lutfi's Smart Lamp",
+		Room:         "office",
 		HwVersion:    request.HwVersion,
 		SwVersion:    request.SwVersion,
 		DeviceTypeId: uuid.MustParse(request.DeviceTypeId),
@@ -91,6 +97,10 @@ func (service service) UpdateDevice(c *fiber.Ctx, request UpdateDeviceRequest) D
 	device.UpdatedAt = time.Now()
 
 	err = service.repository.UpdateDevice(c.Context(), device)
+	helper.PanicIfErr(err)
+
+	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
+	err = helper.HomegraphRequestSync(service.homegraphDeviceService, claims.User.Id)
 	helper.PanicIfErr(err)
 
 	response := NewResponse(device)
@@ -135,6 +145,35 @@ func (service service) AcquireDevice(c *fiber.Ctx, request AcquireDeviceRequest)
 	device.UpdatedAt = time.Now()
 
 	err = service.repository.UpdateDevice(c.Context(), device)
+	helper.PanicIfErr(err)
+
+	err = helper.HomegraphRequestSync(service.homegraphDeviceService, claims.User.Id)
+	helper.PanicIfErr(err)
+
+	response := NewResponse(device)
+
+	return response
+}
+
+func (service service) UnacquireDevice(c *fiber.Ctx, request UnacquireDeviceRequest) DeviceResponse {
+	// get device
+	id, err := uuid.Parse(request.Id)
+	helper.PanicErrIfErr(err, ErrNotFound)
+
+	device, err := service.repository.GetDeviceById(c.Context(), id)
+	helper.PanicErrIfErr(err, ErrNotFound)
+
+	// get user
+	claims := c.Locals(middleware.CtxClaims).(rest.JWTClaims)
+
+	// update device
+	device.UserId = nil
+	device.UpdatedAt = time.Now()
+
+	err = service.repository.UpdateDevice(c.Context(), device)
+	helper.PanicIfErr(err)
+
+	err = helper.HomegraphRequestSync(service.homegraphDeviceService, claims.User.Id)
 	helper.PanicIfErr(err)
 
 	response := NewResponse(device)

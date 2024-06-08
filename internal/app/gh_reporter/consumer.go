@@ -1,8 +1,6 @@
 package gh_reporter
 
 import (
-	"context"
-	"encoding/json"
 	"log"
 
 	"skripsi-be/internal/constant"
@@ -19,12 +17,7 @@ type Consumer struct {
 	homegraphDeviceService *homegraph.DevicesService
 }
 
-func NewConsumer(redisClient *redis.Client) Consumer {
-	homegraphService, err := homegraph.NewService(context.Background())
-	helper.PanicIfErr(err)
-
-	homegraphDeviceService := homegraph.NewDevicesService(homegraphService)
-
+func NewConsumer(redisClient *redis.Client, homegraphDeviceService *homegraph.DevicesService) Consumer {
 	return Consumer{
 		redisClient:            redisClient,
 		homegraphDeviceService: homegraphDeviceService,
@@ -71,33 +64,12 @@ func (consumer *Consumer) StartConsume() {
 }
 
 func (consumer *Consumer) HandleIncomingData(data device_state_log_dto.DeviceStateLog[any]) {
-	// log.Println("data", data)
 	deviceId := data.DeviceId
 	state := data.State
 
 	deviceStateMap := map[string]any{}
 	deviceStateMap[deviceId] = state
 
-	raw, err := json.Marshal(deviceStateMap)
+	err := helper.HomegraphReportStateAndNotification(consumer.homegraphDeviceService, data.UserId, deviceStateMap)
 	helper.LogIfErr(err)
-
-	request := homegraph.ReportStateAndNotificationRequest{
-		AgentUserId: data.UserId,
-		RequestId:   uuid.NewString(),
-		Payload: &homegraph.StateAndNotificationPayload{
-			Devices: &homegraph.ReportStateAndNotificationDevice{
-				States: raw,
-			},
-		},
-	}
-
-	log.Printf("\nstates %+v\n\n", string(raw))
-
-	_, err = consumer.homegraphDeviceService.ReportStateAndNotification(&request).Do()
-	helper.LogIfErr(err)
-
-	// dataJson, err := request.MarshalJSON()
-	// helper.LogIfErr(err)
-
-	// log.Printf("%+v\n\n", string(dataJson))
 }
