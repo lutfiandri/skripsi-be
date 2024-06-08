@@ -71,7 +71,7 @@ func (consumer *Consumer) StartConsume() {
 }
 
 func (consumer *Consumer) HandleIncomingData(data device_state_log_dto.DeviceStateLog[any]) {
-	log.Println("data", data)
+	// log.Println("data", data)
 	deviceId := data.DeviceId
 	state := data.State
 
@@ -91,7 +91,7 @@ func (consumer *Consumer) HandleIncomingData(data device_state_log_dto.DeviceSta
 		},
 	}
 
-	log.Printf("request %+v\n\n", request)
+	log.Printf("\nstates %+v\n\n", string(raw))
 
 	_, err = consumer.homegraphDeviceService.ReportStateAndNotification(&request).Do()
 	helper.LogIfErr(err)

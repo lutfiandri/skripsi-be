@@ -3,6 +3,7 @@ package gh_fulfillment
 import (
 	"context"
 	"log"
+	"time"
 
 	"skripsi-be/internal/constant"
 	"skripsi-be/internal/domain"
@@ -103,13 +104,16 @@ func (service service) Query(c *fiber.Ctx, request Request) QueryResponse {
 	ghDevices := map[string]any{}
 	// "123": {
 	// 	"on": true,
-	// 	"online": true
+	// 	"online": true, //required
+	// 	"status": "SUCCESS", //required
 	// }
 
 	for _, device := range devices {
-		device.LastState["status"] = "SUCCESS"
-		ghDevices[device.Id.String()] = device.LastState
+		state := device.LastState
+		state["status"] = "SUCCESS"
+		ghDevices[device.Id.String()] = state
 	}
+	log.Println("gh devices", ghDevices)
 
 	response := QueryResponse{
 		RequestId: request.RequestId,
@@ -149,6 +153,8 @@ func (service service) Execute(c *fiber.Ctx, request Request) ExecuteResponse {
 			Commands: commandResponses,
 		},
 	}
+
+	time.Sleep(1 * time.Second)
 	return response
 }
 

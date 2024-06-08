@@ -51,12 +51,18 @@ func (consumer consumer) StartConsume() {
 }
 
 func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Message) {
+	log.Println("mqtt data:", string(message.Payload()))
 	data_dto, err := helper.UnmarshalJson[device_state_log_dto.DeviceStateLog[any]](message.Payload())
-	helper.LogIfErr(err)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
 
 	deviceId, err := uuid.Parse(data_dto.DeviceId)
-	helper.LogIfErr(err)
-
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
 	// insert to db
 	data_domain := domain.DeviceStateLog[any]{
 		Id:        uuid.New(),
@@ -73,7 +79,10 @@ func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Mes
 
 	// get user id
 	device, err := consumer.repository.GetDeviceById(context.TODO(), deviceId)
-	helper.LogIfErr(err)
+	if err != nil {
+		log.Println("GetDeviceById:", err.Error())
+		return
+	}
 
 	data_dto.UserId = device.UserId.String()
 
@@ -160,6 +169,4 @@ func (consumer *consumer) PublishToRedisStream(data_dto device_state_log_dto.Dev
 	}).Err()
 
 	helper.LogIfErr(err)
-
-	log.Println("sent", message)
 }

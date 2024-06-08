@@ -97,12 +97,12 @@ func (repository repository) GetDeviceStates(ctx context.Context, from, to *time
 func (repository repository) UpdateDeviceLastState(ctx context.Context, state domain.DeviceStateLog[any]) error {
 	filter := bson.M{"_id": state.DeviceId}
 
-	updateState := map[string]any{}
-	for key, value := range state.State.(map[string]any) {
-		updateState["last_state."+key] = value
-	}
-
-	update := bson.M{"$set": updateState}
+	update := bson.D{{
+		"$set", bson.D{
+			{"last_state", state.State},
+			{"updated_at", time.Now()},
+		},
+	}}
 
 	_, err := repository.deviceCollection.UpdateOne(ctx, filter, update)
 	if err != nil {
