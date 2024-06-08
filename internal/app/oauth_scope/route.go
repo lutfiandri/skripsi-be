@@ -11,7 +11,7 @@ func Route(app *fiber.App, controller Controller) {
 
 	api.Post("/", middleware.NewAuthenticator(), controller.CreateOAuthScope)
 	api.Get("/", middleware.NewAuthenticator(), controller.GetOAuthScopes)
-	api.Get("/:id", middleware.NewAuthenticator(), controller.GetOAuthScope)
+	api.Get("/:id", controller.GetOAuthScope)
 	api.Put("/:id", middleware.NewAuthenticator(), controller.UpdateOAuthScope)
 	api.Delete("/:id", middleware.NewAuthenticator(), controller.DeleteOAuthScope)
 }
