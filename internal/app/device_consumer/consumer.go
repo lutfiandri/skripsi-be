@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"skripsi-be/internal/constant"
 	"skripsi-be/internal/domain"
@@ -100,7 +101,7 @@ func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Mes
 	// note: redis value is stringify of state
 
 	// // 1. Get from redis
-	// redis_key := consumer.GetRedisKey(data_dto)
+	redis_key := consumer.GetRedisKey(data_dto)
 	// value, err := consumer.redisClient.Get(redis_key).Result()
 
 	// // 2. If exists && same state -> don't write to kafka. If not -> write to kafka
@@ -122,11 +123,12 @@ func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Mes
 	// 	}
 	// }
 
-	// // 3. Set to redis. Expires in 1 minute
-	// data_dto_bytes, err := json.Marshal(data_dto.State)
-	// helper.LogIfErr(err)
-	// err = consumer.redisClient.Set(redis_key, string(data_dto_bytes), time.Minute).Err()
-	// helper.LogIfErr(err)
+	// 3. Set to redis. Expires in 1 minute
+	data_dto_bytes, err := json.Marshal(data_dto.State)
+	helper.LogIfErr(err)
+	// FIXME: set to one minute
+	err = consumer.redisClient.Set(redis_key, string(data_dto_bytes), 16*time.Second).Err()
+	helper.LogIfErr(err)
 }
 
 func (consumer consumer) GetRedisKey(dto device_state_log_dto.DeviceStateLog[any]) string {

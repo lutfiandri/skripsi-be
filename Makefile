@@ -1,8 +1,11 @@
 run-main:
 	clear && go run ./cmd/main/main.go
 
-run-consumer:
+run-device-consumer:
 	go run ./cmd/device_consumer/main.go
+
+run-offline-consumer:
+	go run ./cmd/offline_consumer/main.go
 
 run-dummy-device:
 	go run ./cmd/dummy_device/main.go
