@@ -9,6 +9,7 @@ func Route(app *fiber.App, controller Controller) {
 
 	api.Post("/register", controller.Register)
 	api.Post("/login", controller.Login)
+	api.Post("/token", controller.Token)
 
 	api.Post("/forgot-password", controller.ForgotPassword)
 	api.Post("/reset-password", controller.ResetPassword)

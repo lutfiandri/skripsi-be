@@ -121,7 +121,7 @@ func (service service) Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthToke
 		if err != nil {
 			return OAuthTokenResponse{}, err
 		}
-		refreshToken, err := helper.GenerateRefreshJwt(user)
+		refreshToken, err := helper.GenerateRefreshJwt(user, &request.ClientId)
 		if err != nil {
 			return OAuthTokenResponse{}, err
 		}

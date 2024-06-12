@@ -10,6 +10,7 @@ import (
 type Controller interface {
 	Register(c *fiber.Ctx) error
 	Login(c *fiber.Ctx) error
+	Token(c *fiber.Ctx) error
 	ForgotPassword(c *fiber.Ctx) error
 	ResetPassword(c *fiber.Ctx) error
 }
@@ -45,6 +46,18 @@ func (controller controller) Login(c *fiber.Ctx) error {
 	helper.PanicIfErr(err)
 
 	result := controller.service.Login(c, request)
+	response := rest.NewSuccessResponse(result)
+
+	return c.JSON(response)
+}
+
+func (controller controller) Token(c *fiber.Ctx) error {
+	var request TokenRequest
+	parseOption := helper.ParseOptions{ParseBody: true}
+	err := helper.ParseAndValidateRequest[TokenRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
+
+	result := controller.service.Token(c, request)
 	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)

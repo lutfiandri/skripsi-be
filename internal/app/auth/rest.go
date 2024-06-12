@@ -33,3 +33,11 @@ type ResetPasswordRequest struct {
 	Token       string `json:"token"`
 	NewPassword string `json:"new_password"`
 }
+
+type TokenRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+type TokenResponse struct {
+	AccessToken string `json:"access_token"`
+}
