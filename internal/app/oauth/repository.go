@@ -23,6 +23,7 @@ type Repository interface {
 
 	// user
 	GetUserById(ctx context.Context, id uuid.UUID) (domain.User, error)
+	InsertClientIdToUser(ctx context.Context, userId, clientId uuid.UUID) error
 
 	// role
 	GetPermissionsByRoleId(ctx context.Context, roleId uuid.UUID) ([]domain.Permission, error)
@@ -114,6 +115,21 @@ func (repository repository) GetUserById(ctx context.Context, id uuid.UUID) (dom
 	return user, nil
 }
 
+func (repository repository) InsertClientIdToUser(ctx context.Context, userId, clientId uuid.UUID) error {
+	filter := bson.M{"_id": userId}
+
+	update := bson.M{
+		"$push": bson.M{
+			"client_ids": clientId,
+		},
+	}
+
+	_, err := repository.userCollection.UpdateOne(context.TODO(), filter, update)
+
+	return err
+}
+
+// role and permission
 func (repository repository) GetPermissionsByRoleId(ctx context.Context, roleId uuid.UUID) ([]domain.Permission, error) {
 	role := domain.Role{}
 	err := repository.roleCollection.FindOne(ctx, bson.M{"_id": roleId}).Decode(&role)

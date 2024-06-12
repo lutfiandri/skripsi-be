@@ -58,7 +58,7 @@ func (service service) Register(c *fiber.Ctx, request RegisterRequest) RegisterR
 	permissions, err := service.repository.GetPermissionsByRoleId(ctx, user.RoleId)
 	helper.PanicIfErr(err)
 
-	accessToken, err := helper.GenerateJwt(user, permissions)
+	accessToken, err := helper.GenerateJwt(user, permissions, nil)
 	helper.PanicIfErr(err)
 
 	refreshToken, err := helper.GenerateRefreshJwt(user)
@@ -84,7 +84,7 @@ func (service service) Login(c *fiber.Ctx, request LoginRequest) LoginResponse {
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
 	helper.PanicErrIfErr(err, ErrInvalidCredentials)
 
-	accessToken, err := helper.GenerateJwt(user, permissions)
+	accessToken, err := helper.GenerateJwt(user, permissions, nil)
 	helper.PanicIfErr(err)
 
 	refreshToken, err := helper.GenerateRefreshJwt(user)

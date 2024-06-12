@@ -11,7 +11,7 @@ import (
 )
 
 // access token
-func GenerateJwt(user domain.User, permissions []domain.Permission) (string, error) {
+func GenerateJwt(user domain.User, permissions []domain.Permission, clientId *string) (string, error) {
 	permissionCodes := []string{}
 	for _, p := range permissions {
 		permissionCodes = append(permissionCodes, p.Code)
@@ -29,6 +29,8 @@ func GenerateJwt(user domain.User, permissions []domain.Permission) (string, err
 		},
 
 		Permissions: permissionCodes,
+
+		ClientId: clientId,
 	}
 
 	tokens := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

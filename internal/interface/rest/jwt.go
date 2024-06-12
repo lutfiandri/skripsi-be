@@ -11,6 +11,7 @@ type JWTUserClaimsData struct {
 type JWTClaims struct {
 	jwt.StandardClaims
 	User        JWTUserClaimsData `json:"user"`
+	ClientId    *string           `json:"client_id"`
 	Permissions []string          `json:"permissions"`
 }
 
