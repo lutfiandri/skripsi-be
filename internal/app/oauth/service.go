@@ -53,8 +53,13 @@ func (service service) Authorize(c *fiber.Ctx, request OAuthAuthorizeRequest) OA
 	userId, err := uuid.Parse(claims.User.Id)
 	helper.PanicErrIfErr(err, ErrUserNotFound)
 
-	_, err = service.repository.GetUserById(c.Context(), userId)
+	user, err := service.repository.GetUserById(c.Context(), userId)
 	helper.PanicErrIfErr(err, ErrUserNotFound)
+
+	// insert the client id to user
+	if !slices.Contains(user.ClientIds, clientId) {
+		service.repository.InsertClientIdToUser(c.Context(), userId, clientId)
+	}
 
 	// insert auth code
 	authCode := domain.OAuthAuthCode{
@@ -112,11 +117,11 @@ func (service service) Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthToke
 		permissions, err := service.repository.GetPermissionsByRoleId(c.Context(), user.RoleId)
 		helper.PanicIfErr(err)
 
-		accessToken, err := helper.GenerateJwt(user, permissions)
+		accessToken, err := helper.GenerateJwt(user, permissions, &request.ClientId)
 		if err != nil {
 			return OAuthTokenResponse{}, err
 		}
-		refreshToken, err := helper.GenerateRefreshJwt(user)
+		refreshToken, err := helper.GenerateRefreshJwt(user, &request.ClientId)
 		if err != nil {
 			return OAuthTokenResponse{}, err
 		}
@@ -148,7 +153,7 @@ func (service service) Token(c *fiber.Ctx, request OAuthTokenRequest) (OAuthToke
 		permissions, err := service.repository.GetPermissionsByRoleId(c.Context(), user.RoleId)
 		helper.PanicIfErr(err)
 
-		accessToken, err := helper.GenerateJwt(user, permissions)
+		accessToken, err := helper.GenerateJwt(user, permissions, &request.ClientId)
 		if err != nil {
 			return OAuthTokenResponse{}, err
 		}

@@ -11,10 +11,12 @@ type JWTUserClaimsData struct {
 type JWTClaims struct {
 	jwt.StandardClaims
 	User        JWTUserClaimsData `json:"user"`
+	ClientId    *string           `json:"client_id"`
 	Permissions []string          `json:"permissions"`
 }
 
 type JWTRefreshClaims struct {
 	jwt.StandardClaims
-	User JWTUserClaimsData `json:"user"`
+	User     JWTUserClaimsData `json:"user"`
+	ClientId *string           `json:"client_id"`
 }

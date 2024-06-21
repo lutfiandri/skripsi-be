@@ -7,6 +7,7 @@ type ProfileResponse struct {
 	Email     string    `json:"email"`
 	Name      string    `json:"name"`
 	RoleId    string    `json:"role"`
+	ClientIds []string  `json:"client_ids"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

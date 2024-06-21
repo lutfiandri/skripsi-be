@@ -16,6 +16,7 @@ import (
 type Service interface {
 	Register(c *fiber.Ctx, request RegisterRequest) RegisterResponse
 	Login(c *fiber.Ctx, request LoginRequest) LoginResponse
+	Token(c *fiber.Ctx, request TokenRequest) TokenResponse
 	ForgotPassword(c *fiber.Ctx, request ForgotPasswordRequest)
 	ResetPassword(c *fiber.Ctx, request ResetPasswordRequest)
 }
@@ -58,10 +59,10 @@ func (service service) Register(c *fiber.Ctx, request RegisterRequest) RegisterR
 	permissions, err := service.repository.GetPermissionsByRoleId(ctx, user.RoleId)
 	helper.PanicIfErr(err)
 
-	accessToken, err := helper.GenerateJwt(user, permissions)
+	accessToken, err := helper.GenerateJwt(user, permissions, nil)
 	helper.PanicIfErr(err)
 
-	refreshToken, err := helper.GenerateRefreshJwt(user)
+	refreshToken, err := helper.GenerateRefreshJwt(user, nil)
 	helper.PanicIfErr(err)
 
 	response := RegisterResponse{
@@ -84,15 +85,40 @@ func (service service) Login(c *fiber.Ctx, request LoginRequest) LoginResponse {
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
 	helper.PanicErrIfErr(err, ErrInvalidCredentials)
 
-	accessToken, err := helper.GenerateJwt(user, permissions)
+	accessToken, err := helper.GenerateJwt(user, permissions, nil)
 	helper.PanicIfErr(err)
 
-	refreshToken, err := helper.GenerateRefreshJwt(user)
+	refreshToken, err := helper.GenerateRefreshJwt(user, nil)
 	helper.PanicIfErr(err)
 
 	response := LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+	}
+
+	return response
+}
+
+func (service service) Token(c *fiber.Ctx, request TokenRequest) TokenResponse {
+	ctx := c.Context()
+
+	claims, err := helper.ParseRefreshJwt(request.RefreshToken)
+	helper.PanicIfErr(err)
+	if claims.ClientId != nil {
+		panic(ErrInvalidGrant)
+	}
+
+	user, err := service.repository.GetUserByEmail(ctx, claims.User.Email)
+	helper.PanicErrIfErr(err, ErrInvalidCredentials)
+
+	permissions, err := service.repository.GetPermissionsByRoleId(ctx, user.RoleId)
+	helper.PanicIfErr(err)
+
+	accessToken, err := helper.GenerateJwt(user, permissions, nil)
+	helper.PanicIfErr(err)
+
+	response := TokenResponse{
+		AccessToken: accessToken,
 	}
 
 	return response

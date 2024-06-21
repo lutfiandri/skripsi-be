@@ -11,7 +11,7 @@ import (
 )
 
 // access token
-func GenerateJwt(user domain.User, permissions []domain.Permission) (string, error) {
+func GenerateJwt(user domain.User, permissions []domain.Permission, clientId *string) (string, error) {
 	permissionCodes := []string{}
 	for _, p := range permissions {
 		permissionCodes = append(permissionCodes, p.Code)
@@ -29,6 +29,8 @@ func GenerateJwt(user domain.User, permissions []domain.Permission) (string, err
 		},
 
 		Permissions: permissionCodes,
+
+		ClientId: clientId,
 	}
 
 	tokens := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -48,7 +50,7 @@ func ParseJwt(tokenString string) (rest.JWTClaims, error) {
 }
 
 // refresh token
-func GenerateRefreshJwt(user domain.User) (string, error) {
+func GenerateRefreshJwt(user domain.User, clientId *string) (string, error) {
 	claims := rest.JWTRefreshClaims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(999999 * time.Hour).Unix(), // doesn't expire (google's requirement)
@@ -58,6 +60,7 @@ func GenerateRefreshJwt(user domain.User) (string, error) {
 			Email: user.Email,
 			Name:  user.Name,
 		},
+		ClientId: clientId,
 	}
 	tokens := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return tokens.SignedString([]byte(config.JWTRefreshSecretKey))

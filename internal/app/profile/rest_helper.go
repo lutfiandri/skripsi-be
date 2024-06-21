@@ -10,6 +10,7 @@ func NewResponse(user domain.User) ProfileResponse {
 		Email:     user.Email,
 		Name:      user.Name,
 		RoleId:    user.RoleId.String(),
+		ClientIds: user.ClientIds.Strings(),
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
