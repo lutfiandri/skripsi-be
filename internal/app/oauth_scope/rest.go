@@ -10,6 +10,11 @@ type OAuthScopeResponse struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
+type OAuthScopePublicResponse struct {
+	Id          string `json:"id"`
+	Description string `json:"description"` // example: Create, update, and delete device information
+}
+
 type GetOAuthScopeRequest struct {
 	Id string `params:"id" validate:"required"`
 }

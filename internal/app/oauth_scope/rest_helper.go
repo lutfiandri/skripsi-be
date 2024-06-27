@@ -23,3 +23,12 @@ func NewResponses(oauthScopes []domain.OAuthScope) []OAuthScopeResponse {
 	}
 	return results
 }
+
+func NewPublicResponse(oauthScope domain.OAuthScope) OAuthScopePublicResponse {
+	result := OAuthScopePublicResponse{
+		Id:          oauthScope.Id.String(),
+		Description: oauthScope.Description,
+	}
+
+	return result
+}

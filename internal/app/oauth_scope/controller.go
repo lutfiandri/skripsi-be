@@ -11,6 +11,7 @@ type Controller interface {
 	CreateOAuthScope(c *fiber.Ctx) error
 	GetOAuthScopes(c *fiber.Ctx) error
 	GetOAuthScope(c *fiber.Ctx) error
+	GetOAuthScopePublic(c *fiber.Ctx) error
 	UpdateOAuthScope(c *fiber.Ctx) error
 	DeleteOAuthScope(c *fiber.Ctx) error
 }
@@ -53,6 +54,18 @@ func (controller controller) GetOAuthScope(c *fiber.Ctx) error {
 	helper.PanicIfErr(err)
 
 	result := controller.service.GetOAuthScope(c, request)
+	response := rest.NewSuccessResponse(result)
+
+	return c.JSON(response)
+}
+
+func (controller controller) GetOAuthScopePublic(c *fiber.Ctx) error {
+	var request GetOAuthScopeRequest
+	parseOption := helper.ParseOptions{ParseParams: true}
+	err := helper.ParseAndValidateRequest[GetOAuthScopeRequest](c, &request, parseOption)
+	helper.PanicIfErr(err)
+
+	result := controller.service.GetOAuthScopePublic(c, request)
 	response := rest.NewSuccessResponse(result)
 
 	return c.JSON(response)
