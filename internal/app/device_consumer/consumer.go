@@ -85,6 +85,11 @@ func (consumer consumer) HandleIncomingData(client mqtt.Client, message mqtt.Mes
 		return
 	}
 
+	if device.UserId == nil {
+		log.Println("No User ID")
+		return
+	}
+
 	data_dto.UserId = device.UserId.String()
 
 	data_map := helper.StructToMap(data_dto)
